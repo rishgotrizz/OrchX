@@ -54,8 +54,14 @@ export const DocumentEditorWidget = forwardRef((props, ref) => {
   if (!activeDocument) {
     return (
       <Panel id="document-editor" ref={panelRef} className="h-full !bg-void !p-0 overflow-hidden border-none !bg-transparent">
-        <div className="flex items-center justify-center h-full text-text-muted">
-           No project selected.
+        <div className="flex flex-col items-center justify-center h-full text-text-muted space-y-4">
+          <div className="p-4 rounded-full bg-surface border border-glass-border">
+            <Sparkles className="w-8 h-8 text-accent-primary" />
+          </div>
+          <div className="flex flex-col items-center text-center space-y-1">
+            <span className="text-lg font-bold text-text-primary">No Document Selected</span>
+            <span className="text-xs text-text-secondary max-w-sm">Select an existing specification from the left collections or create a new custom document.</span>
+          </div>
         </div>
       </Panel>
     );
