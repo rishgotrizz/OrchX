@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: orchx_db
+    environment:
+      POSTGRES_USER: orchx
+      POSTGRES_PASSWORD: orchxpassword
+      POSTGRES_DB: orchx
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orchx -d orchx"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: ./backend/Dockerfile
+    container_name: orchx_backend
+    command: uvicorn orchx_api.main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      - POSTGRES_SERVER=db
+      - POSTGRES_USER=orchx
+      - POSTGRES_PASSWORD=orchxpassword
+      - POSTGRES_DB=orchx
+      - SECRET_KEY=32b217e651e069273fb89ef0673d32efde6db36d0dbef1e83161c6b12a8be51e
+      - ENVIRONMENT=development
+      - PLUGIN_DIR=/app/plugins
+      - PYTHONPATH=/app/packages/orchx-core:/app/packages/orchx-runtime:/app/packages/orchx-api
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: orchx_frontend
+    command: npm run dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:

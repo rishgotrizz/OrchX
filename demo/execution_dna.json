@@ -1,0 +1,130 @@
+{
+  "run_id": "8ee3d21e-91e9-4e36-934b-b651cc923595",
+  "goal": "Build a REST API task tracker application using Python and FastAPI",
+  "started_at": "2026-07-27T20:40:25.708733+00:00",
+  "finished_at": "2026-07-27T20:40:26.013768+00:00",
+  "duration_seconds": 0.305,
+  "total_events": 11,
+  "provider_calls": 3,
+  "total_tokens": 90,
+  "total_cost_usd": 0.0,
+  "total_latency_ms": 303.42,
+  "memory_operations": 1,
+  "security_checks": 1,
+  "review_operations": 1,
+  "checkpoints_created": 1,
+  "events": [
+    {
+      "subsystem": "InfrastructureHealthManager",
+      "action": "check_readiness",
+      "timestamp": "2026-07-27T20:40:25.709092+00:00",
+      "details": {}
+    },
+    {
+      "subsystem": "ProviderManager",
+      "action": "providers_registered",
+      "timestamp": "2026-07-27T20:40:25.709524+00:00",
+      "details": {
+        "count": 2
+      }
+    },
+    {
+      "subsystem": "MemoryEngine",
+      "action": "store_working_memory",
+      "timestamp": "2026-07-27T20:40:25.709724+00:00",
+      "details": {
+        "importance": "HIGH"
+      }
+    },
+    {
+      "subsystem": "SecurityManager",
+      "action": "pre_authorization",
+      "timestamp": "2026-07-27T20:40:25.709732+00:00",
+      "details": {
+        "risk_level": "LOW"
+      }
+    },
+    {
+      "subsystem": "Planner",
+      "action": "decompose_goal",
+      "timestamp": "2026-07-27T20:40:25.709735+00:00",
+      "details": {
+        "goal": "Build a REST API task tracker application using Python and FastAPI"
+      }
+    },
+    {
+      "subsystem": "AgentPlatform",
+      "action": "task_completed",
+      "timestamp": "2026-07-27T20:40:25.811092+00:00",
+      "details": {
+        "task_index": 1,
+        "model": "gpt-4o"
+      }
+    },
+    {
+      "subsystem": "AgentPlatform",
+      "action": "task_completed",
+      "timestamp": "2026-07-27T20:40:25.912334+00:00",
+      "details": {
+        "task_index": 2,
+        "model": "gpt-4o"
+      }
+    },
+    {
+      "subsystem": "AgentPlatform",
+      "action": "task_completed",
+      "timestamp": "2026-07-27T20:40:26.013564+00:00",
+      "details": {
+        "task_index": 3,
+        "model": "gpt-4o"
+      }
+    },
+    {
+      "subsystem": "ReviewEngine",
+      "action": "code_review",
+      "timestamp": "2026-07-27T20:40:26.013586+00:00",
+      "details": {
+        "tasks_reviewed": 3
+      }
+    },
+    {
+      "subsystem": "OptimizationEngine",
+      "action": "analyze_metrics",
+      "timestamp": "2026-07-27T20:40:26.013589+00:00",
+      "details": {
+        "tokens": 90
+      }
+    },
+    {
+      "subsystem": "CheckpointManager",
+      "action": "checkpoint_created",
+      "timestamp": "2026-07-27T20:40:26.013744+00:00",
+      "details": {
+        "checkpoint_id": "cp-393f808a-7c64-4ff4-937b-1bf0960c25b0"
+      }
+    }
+  ],
+  "provider_detail": [
+    {
+      "provider": "openai",
+      "model": "gpt-4o",
+      "tokens": 30,
+      "cost_usd": 0.0,
+      "latency_ms": 101.14407539367676
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-4o",
+      "tokens": 30,
+      "cost_usd": 0.0,
+      "latency_ms": 101.1347770690918
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-4o",
+      "tokens": 30,
+      "cost_usd": 0.0,
+      "latency_ms": 101.13787651062012
+    }
+  ]
+}
