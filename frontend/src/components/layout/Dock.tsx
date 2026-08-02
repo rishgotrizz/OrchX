@@ -5,24 +5,17 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion } from "framer-motion"
 import { WORKSPACE_REGISTRY } from "@/lib/workspace-registry"
-import { Plus, Search, MessageSquare, Box, Settings, Activity, MonitorPlay } from "lucide-react"
-
-const MOCK_HISTORY = [
-  { id: 1, title: "Build CRM", group: "Today" },
-  { id: 2, title: "Create Ecommerce Store", group: "Today" },
-  { id: 3, title: "Build Portfolio", group: "Yesterday" },
-  { id: 4, title: "Research AI Agents", group: "Older" },
-];
+import { Plus, Search, MessageSquare, Box, Settings, Activity, MonitorPlay, Info } from "lucide-react"
 
 export function Dock() {
   const pathname = usePathname()
 
   const getFriendlyName = (id: string) => {
-    if (id === 'mission-control') return { title: 'Home', icon: MessageSquare };
-    if (id === 'documents-studio') return { title: 'Projects', icon: Box };
-    if (id === 'runtime-observatory') return { title: 'Runtime', icon: Activity };
-    if (id === 'preview-studio') return { title: 'Preview', icon: MonitorPlay };
-    if (id === 'command-center') return { title: 'Settings', icon: Settings };
+    if (id === 'mission-control') return { title: 'Home', icon: MessageSquare, desc: 'Autonomous agent task execution, goal breakdown, and decision ledger' };
+    if (id === 'documents-studio') return { title: 'Projects', icon: Box, desc: 'Knowledge vault, specifications, architecture blueprints, and document editor' };
+    if (id === 'runtime-observatory') return { title: 'Runtime', icon: Activity, desc: 'Live kernel telemetry, active worker pool, and circuit-breaker provider routing' };
+    if (id === 'preview-studio') return { title: 'Preview', icon: MonitorPlay, desc: 'Live web sandbox, dynamic component previews, and UI rendering' };
+    if (id === 'command-center') return { title: 'Settings', icon: Settings, desc: 'Provider key management, SecretVault policies, and system configuration' };
     return null;
   }
 
@@ -32,11 +25,20 @@ export function Dock() {
     <aside className="fixed left-0 top-0 bottom-0 w-64 bg-surface flex flex-col border-r border-glass-divider z-30" aria-label="Main Navigation">
       
       {/* Header */}
-      <div className="p-4 flex items-center space-x-3">
-        <div className="w-8 h-8 rounded-lg bg-accent-primary flex items-center justify-center shadow-glow">
-          <span className="text-sm text-white font-bold tracking-tighter">OX</span>
+      <div className="p-4 flex items-center justify-between">
+        <span className="text-xl font-bold text-text-primary tracking-tight">OrchX</span>
+        <div className="relative group/headinfo">
+          <button 
+            type="button"
+            className="p-1 text-text-muted hover:text-accent-primary transition-colors"
+          >
+            <Info className="w-4 h-4" />
+          </button>
+          <div className="absolute left-full top-0 ml-2 w-60 p-2.5 bg-surface border border-glass-border rounded-xl shadow-2xl text-xs text-text-secondary opacity-0 pointer-events-none group-hover/headinfo:opacity-100 group-hover/headinfo:pointer-events-auto transition-opacity z-50">
+            <span className="font-semibold text-text-primary block mb-1">OrchX Enterprise</span>
+            Universal multi-agent orchestration engine with zero-trust SecretVault and circuit-breaker provider routing.
+          </div>
         </div>
-        <span className="text-lg font-medium text-text-primary tracking-tight">OrchX</span>
       </div>
 
       {/* Top Actions */}
@@ -53,41 +55,39 @@ export function Dock() {
         </div>
       </div>
 
-      {/* History */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-6">
-        {['Today', 'Yesterday', 'Older'].map(group => {
-          const items = MOCK_HISTORY.filter(h => h.group === group);
-          if (items.length === 0) return null;
-          return (
-            <div key={group} className="space-y-1">
-              <h4 className="text-xs font-semibold text-text-muted px-2">{group}</h4>
-              <div className="flex flex-col">
-                {items.map(item => (
-                  <button key={item.id} className="text-left px-2 py-1.5 text-sm text-text-secondary hover:bg-surface-hover hover:text-text-primary rounded-md truncate transition-colors">
-                    {item.title}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )
-        })}
-      </div>
+      {/* Navigation Space */}
+      <div className="flex-1 overflow-y-auto p-3" />
 
       {/* Primary Workspaces */}
       <div className="p-3 border-t border-glass-divider space-y-0.5">
         {primaryWorkspaces.map((workspace) => {
           const isActive = pathname?.startsWith(workspace.route)
           const Icon = workspace.friendly!.icon;
+          const desc = workspace.friendly!.desc;
           
           return (
-            <Link 
-              key={workspace.id}
-              href={workspace.route}
-              className={`relative flex items-center space-x-3 px-3 py-2 rounded-md transition-colors ${isActive ? 'bg-surface-active text-text-primary font-medium' : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary'}`}
-            >
-              <Icon className="w-4 h-4 shrink-0" />
-              <span className="text-sm">{workspace.friendly!.title}</span>
-            </Link>
+            <div key={workspace.id} className="relative group/navitem flex items-center">
+              <Link 
+                href={workspace.route}
+                className={`flex-1 flex items-center space-x-3 px-3 py-2 rounded-md transition-colors ${isActive ? 'bg-surface-active text-text-primary font-medium' : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary'}`}
+              >
+                <Icon className="w-4 h-4 shrink-0" />
+                <span className="text-sm">{workspace.friendly!.title}</span>
+              </Link>
+              <div className="relative group/info pr-2">
+                <button 
+                  type="button"
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                  className="p-1 text-text-muted hover:text-accent-primary transition-colors rounded"
+                >
+                  <Info className="w-3.5 h-3.5" />
+                </button>
+                <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 w-56 p-2.5 bg-surface border border-glass-border rounded-xl shadow-2xl text-xs text-text-secondary opacity-0 pointer-events-none group-hover/info:opacity-100 group-hover/info:pointer-events-auto transition-opacity z-50">
+                  <span className="font-semibold text-text-primary block mb-0.5">{workspace.friendly!.title}</span>
+                  {desc}
+                </div>
+              </div>
+            </div>
           )
         })}
       </div>

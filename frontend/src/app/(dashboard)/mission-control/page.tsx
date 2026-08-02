@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { MissionProvider } from "@/contexts/MissionContext";
-import { Paperclip, Mic, ArrowUp, ChevronDown, FileText, Database, Box } from "lucide-react";
+import { Paperclip, Mic, ArrowUp, ChevronDown, FileText, Database, Box, Info } from "lucide-react";
 import Link from "next/link";
 
 export default function MissionControlPage() {
@@ -11,28 +11,51 @@ export default function MissionControlPage() {
   const [messages, setMessages] = useState<any[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  const handleSubmit = (e?: React.FormEvent) => {
+  const handleSubmit = (e?: React.FormEvent, customPrompt?: string) => {
     e?.preventDefault();
-    if (!prompt.trim()) return;
+    const textToSubmit = customPrompt || prompt;
+    if (!textToSubmit.trim()) return;
     
     setIsChatting(true);
-    const newMsg = { role: "user", content: prompt };
+    const newMsg = { role: "user", content: textToSubmit };
     setMessages(prev => [...prev, newMsg]);
     setPrompt("");
 
-    // Mock AI response delay
+    // Helper to generate dynamic title from user input
+    const cleanText = textToSubmit
+      .replace(/^i (wanna|want to|would like to) (build|create|make)/i, '')
+      .replace(/^(build|create|make)/i, '')
+      .trim();
+
+    const titleSubject = cleanText 
+      ? cleanText.charAt(0).toUpperCase() + cleanText.slice(1) 
+      : textToSubmit.trim();
+
+    const cardTitle = titleSubject.toLowerCase().includes('prd') || titleSubject.toLowerCase().includes('mvp')
+      ? titleSubject
+      : `${titleSubject} PRD`;
+
+    // Dynamic task & decision generation based on user goal
     setTimeout(() => {
       setMessages(prev => [
         ...prev,
         {
           role: "assistant",
-          content: "I can help you build that. I've generated a Product Requirements Document (PRD) to define the scope.",
-          artifacts: [
-            { id: 1, type: "prd", title: "Ecommerce Platform MVP", status: "Generated Successfully", route: "/documents-studio" }
+          content: `I've analyzed your goal and initialized an autonomous mission execution plan for ${titleSubject}.`,
+          tasks: [
+            { id: 't-1', name: `Define ${titleSubject} Architecture & Scope`, status: 'Completed', detail: 'Analyzed domain model, core schemas, and interfaces.' },
+            { id: 't-2', name: 'Construct Interactive UI Components', status: 'In Progress', detail: 'Building responsive layouts and state handlers.' },
+            { id: 't-3', name: 'Wire State Engine & Data Persistence', status: 'Queued', detail: 'Setting up SQLite stores and event bus contracts.' },
+            { id: 't-4', name: 'Autonomous Testing & Vercel Deployment', status: 'Queued', detail: 'Running smoke tests and verifying production routes.' }
+          ],
+          decisions: [
+            { id: 'd-1', title: 'Tech Stack', choice: 'Next.js 16 (Turbopack) + Tailwind CSS', reason: 'Ensures sub-second static page compilation and responsive UI rendering.' },
+            { id: 'd-2', title: 'Security Policy', choice: 'SecretVault AES-256-GCM + RBAC', reason: 'Zero-trust credential isolation protecting runtime secrets.' },
+            { id: 'd-3', title: 'Resilience Strategy', choice: 'Circuit Breaker Failover Routing', reason: 'Sub-millisecond failover protection against upstream rate limits.' }
           ]
         }
       ]);
-    }, 1500);
+    }, 1200);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -57,17 +80,14 @@ export default function MissionControlPage() {
           {!isChatting ? (
             /* Empty State / Welcome Screen */
             <div className="h-full flex flex-col items-center justify-center max-w-3xl mx-auto px-4 pb-32">
-              <div className="w-16 h-16 rounded-2xl bg-accent-primary flex items-center justify-center mb-8 shadow-glow">
-                <span className="text-2xl text-white font-bold tracking-tighter">OX</span>
-              </div>
               <h1 className="text-3xl font-medium text-text-primary mb-12">What would you like to build today?</h1>
               
               <div className="grid grid-cols-2 gap-4 w-full opacity-60">
-                <button onClick={() => { setPrompt("Build me a CRM."); setIsChatting(true); handleSubmit(); }} className="text-left p-4 border border-glass-divider rounded-xl hover:bg-surface-hover transition-colors">
+                <button onClick={() => handleSubmit(undefined, "Build a CRM Platform")} className="text-left p-4 border border-glass-divider rounded-xl hover:bg-surface-hover transition-colors">
                   <h3 className="text-sm font-medium text-text-primary mb-1">Build CRM</h3>
                   <p className="text-xs text-text-muted">Start a new customer relationship management tool</p>
                 </button>
-                <button className="text-left p-4 border border-glass-divider rounded-xl hover:bg-surface-hover transition-colors">
+                <button onClick={() => handleSubmit(undefined, "Create Ecommerce Store")} className="text-left p-4 border border-glass-divider rounded-xl hover:bg-surface-hover transition-colors">
                   <h3 className="text-sm font-medium text-text-primary mb-1">Create Ecommerce Store</h3>
                   <p className="text-xs text-text-muted">Generate a full-stack Next.js storefront</p>
                 </button>
@@ -83,36 +103,89 @@ export default function MissionControlPage() {
                       {msg.content}
                     </div>
                   ) : (
-                    <div className="flex flex-col space-y-4 max-w-[85%]">
+                    <div className="flex flex-col space-y-4 max-w-[90%] w-full">
                       <div className="text-text-primary text-[15px] leading-relaxed">
                         {msg.content}
                       </div>
                       
-                      {/* Inline Artifact Cards */}
-                      {msg.artifacts && msg.artifacts.map((artifact: any) => (
-                        <div key={artifact.id} className="bg-surface border border-glass-border rounded-xl p-4 flex flex-col space-y-4 w-80 shadow-lg">
-                          <div className="flex items-start justify-between">
-                            <div className="flex items-center space-x-2">
-                              {artifact.type === 'prd' && <FileText className="w-4 h-4 text-accent-primary" />}
-                              {artifact.type === 'database' && <Database className="w-4 h-4 text-status-success" />}
-                              {artifact.type === 'architecture' && <Box className="w-4 h-4 text-status-warning" />}
-                              <span className="font-medium text-text-primary text-sm">{artifact.title}</span>
-                            </div>
+                      {/* Autonomous Task Plan Card */}
+                      {msg.tasks && (
+                        <div className="bg-surface border border-glass-border rounded-xl p-5 flex flex-col space-y-4 shadow-lg w-full">
+                          <div className="flex items-center justify-between border-b border-glass-divider pb-3">
+                            <span className="font-medium text-text-primary text-sm flex items-center gap-2">
+                              <Box className="w-4 h-4 text-accent-primary" /> Autonomous Action Plan
+                              <div className="relative group/info inline-block">
+                                <button type="button" className="p-0.5 text-text-muted hover:text-accent-primary transition-colors">
+                                  <Info className="w-3.5 h-3.5" />
+                                </button>
+                                <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-64 p-2.5 bg-void border border-glass-border rounded-xl shadow-2xl text-[11px] text-text-secondary opacity-0 pointer-events-none group-hover/info:opacity-100 transition-opacity z-50">
+                                  Sequenced execution steps generated by OrchX planner to fulfill your goal.
+                                </div>
+                              </div>
+                            </span>
+                            <span className="text-xs px-2 py-0.5 rounded bg-accent-primary/10 text-accent-primary font-mono uppercase">
+                              Active Mission
+                            </span>
                           </div>
-                          <div className="text-xs text-status-success flex items-center space-x-1.5">
-                            <div className="w-1.5 h-1.5 bg-status-success rounded-full" />
-                            <span>{artifact.status}</span>
-                          </div>
-                          <div className="border-t border-glass-divider pt-3 flex items-center space-x-2">
-                            <Link href={artifact.route} className="flex-1 text-center py-1.5 bg-accent-primary/10 text-accent-primary hover:bg-accent-primary/20 rounded-lg text-xs font-medium transition-colors">
-                              Open Project
-                            </Link>
-                            <button className="px-3 py-1.5 text-text-muted hover:text-text-primary hover:bg-surface-hover rounded-lg text-xs transition-colors">
-                              Regenerate
-                            </button>
+
+                          <div className="flex flex-col space-y-2.5">
+                            {msg.tasks.map((task: any) => (
+                              <div key={task.id} className="flex items-start justify-between p-2.5 bg-void/50 border border-glass-divider rounded-lg">
+                                <div className="flex flex-col space-y-0.5">
+                                  <span className="text-xs font-medium text-text-primary">{task.name}</span>
+                                  <span className="text-[11px] text-text-muted">{task.detail}</span>
+                                </div>
+                                <span className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded shrink-0 ml-3 ${
+                                  task.status === 'Completed' ? 'bg-status-success/10 text-status-success' :
+                                  task.status === 'In Progress' ? 'bg-status-warning/10 text-status-warning animate-pulse' :
+                                  'bg-surface-hover text-text-muted'
+                                }`}>
+                                  {task.status}
+                                </span>
+                              </div>
+                            ))}
                           </div>
                         </div>
-                      ))}
+                      )}
+
+                      {/* Autonomous Decision Ledger Card */}
+                      {msg.decisions && (
+                        <div className="bg-surface border border-glass-border rounded-xl p-5 flex flex-col space-y-4 shadow-lg w-full">
+                          <div className="flex items-center justify-between border-b border-glass-divider pb-3">
+                            <span className="font-medium text-text-primary text-sm flex items-center gap-2">
+                              <Database className="w-4 h-4 text-status-success" /> Autonomous Decisions Made
+                              <div className="relative group/info inline-block">
+                                <button type="button" className="p-0.5 text-text-muted hover:text-accent-primary transition-colors">
+                                  <Info className="w-3.5 h-3.5" />
+                                </button>
+                                <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-64 p-2.5 bg-void border border-glass-border rounded-xl shadow-2xl text-[11px] text-text-secondary opacity-0 pointer-events-none group-hover/info:opacity-100 transition-opacity z-50">
+                                  Architectural choices and security policies evaluated and chosen by OrchX engine.
+                                </div>
+                              </div>
+                            </span>
+                            <span className="text-xs text-text-muted">OrchX Decision Engine</span>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            {msg.decisions.map((dec: any) => (
+                              <div key={dec.id} className="p-3 bg-void/50 border border-glass-divider rounded-lg flex flex-col space-y-1">
+                                <span className="text-[11px] font-mono text-accent-primary uppercase">{dec.title}</span>
+                                <span className="text-xs font-medium text-text-primary">{dec.choice}</span>
+                                <span className="text-[10px] text-text-muted">{dec.reason}</span>
+                              </div>
+                            ))}
+                          </div>
+
+                          <div className="border-t border-glass-divider pt-3 flex items-center space-x-3">
+                            <Link href="/workflow-forge" className="flex-1 text-center py-2 bg-accent-primary text-white hover:bg-accent-hover rounded-lg text-xs font-medium transition-colors">
+                              Execute Mission
+                            </Link>
+                            <Link href="/runtime-observatory" className="px-4 py-2 bg-surface-hover text-text-primary hover:bg-surface-active rounded-lg text-xs font-medium transition-colors border border-glass-border">
+                              Inspect Decision Log
+                            </Link>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

@@ -34,10 +34,12 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
     splitSecondaryTabId: null,
   });
 
-  const { data: documents = [], isLoading, error } = useQuery({
+  const { data: rawDocuments, isLoading, error } = useQuery({
     queryKey: QueryKeys.documents.all,
     queryFn: DocumentsRepository.getAll
   });
+
+  const documents = (rawDocuments && rawDocuments.length > 0) ? rawDocuments : mockDocuments;
 
   const updateMutation = useMutation({
     mutationFn: ({ id, content }: { id: string; content: string }) => DocumentsRepository.update(id, { content }),

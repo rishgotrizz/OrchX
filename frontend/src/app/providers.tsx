@@ -19,11 +19,15 @@ export function ReactQueryProvider({ children }: { children: React.ReactNode }) 
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      if (process.env.NEXT_PUBLIC_ENABLE_MSW === 'true') {
-        import('@/lib/mocks/browser').then(async ({ worker }) => {
-          await worker.start({ onUnhandledRequest: 'bypass' });
-          setMswReady(true);
-        });
+      if (process.env.NEXT_PUBLIC_ENABLE_MSW !== 'false') {
+        import('@/lib/mocks/browser')
+          .then(async ({ worker }) => {
+            await worker.start({ onUnhandledRequest: 'bypass' });
+            setMswReady(true);
+          })
+          .catch(() => {
+            setMswReady(true);
+          });
       } else {
         setMswReady(true);
       }

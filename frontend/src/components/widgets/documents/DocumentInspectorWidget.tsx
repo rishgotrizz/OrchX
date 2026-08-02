@@ -29,7 +29,7 @@ export const DocumentInspectorWidget = forwardRef((props, ref) => {
     initialize: () => {}, mount: () => {}, refresh: () => {}, sleep: () => {}, resume: () => {}, destroy: () => {}, onVisibilityChange: () => {}, onPermissionChange: () => {},
   }));
 
-  if (!doc) return <Panel id="doc-inspector" header="AI Intelligence" className="h-full border-none !bg-transparent"><div className="p-4 text-xs text-text-muted">No PRD selected</div></Panel>;
+  if (!doc) return <Panel id="doc-inspector" header="AI Intelligence" className="h-full border-none !bg-transparent"><div className="p-4 text-xs text-text-muted">No document selected</div></Panel>;
 
   return (
     <Panel id="doc-inspector" ref={panelRef} header="AI Intelligence" className="h-full border-none !bg-transparent">

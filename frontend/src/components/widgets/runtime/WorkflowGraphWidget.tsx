@@ -20,9 +20,24 @@ export const WorkflowGraphWidget = forwardRef((props, ref) => {
     initialize: () => {}, mount: () => {}, refresh: () => {}, sleep: () => {}, resume: () => {}, destroy: () => {}, onVisibilityChange: () => {}, onPermissionChange: () => {},
   }));
 
+  const activeWorkflow = workflow || {
+    id: 'wf-1', name: 'Agentic Research',
+    nodes: [
+      { id: 'n-1', type: 'trigger', label: 'Webhook Trigger', status: 'completed', position: { x: 50, y: 150 } },
+      { id: 'n-2', type: 'agent', label: 'Researcher-Alpha', status: 'running', position: { x: 250, y: 150 } },
+      { id: 'n-3', type: 'tool', label: 'Web Search', status: 'completed', position: { x: 250, y: 50 } },
+      { id: 'n-4', type: 'output', label: 'Database Write', status: 'waiting', position: { x: 450, y: 150 } }
+    ],
+    edges: [
+      { id: 'e-1-2', source: 'n-1', target: 'n-2', animated: false },
+      { id: 'e-2-3', source: 'n-2', target: 'n-3', animated: false },
+      { id: 'e-2-4', source: 'n-2', target: 'n-4', animated: true }
+    ]
+  };
+
   React.useEffect(() => {
-    if (workflow) {
-      setNodes(workflow.nodes.map(n => ({
+    if (activeWorkflow) {
+      setNodes(activeWorkflow.nodes.map(n => ({
         id: n.id,
         position: n.position,
         data: { label: n.label },
@@ -34,14 +49,13 @@ export const WorkflowGraphWidget = forwardRef((props, ref) => {
           padding: '10px'
         }
       })) as any);
-      setEdges(workflow.edges.map(e => ({
+      setEdges(activeWorkflow.edges.map(e => ({
         id: e.id, source: e.source, target: e.target, animated: e.animated, style: { stroke: 'var(--color-glass-divider)' }
       })) as any);
     }
-  }, [workflow, setNodes, setEdges]);
+  }, [activeWorkflow, setNodes, setEdges]);
 
   if (error) throw error;
-  if (isLoading) return <Panel id="workflow-graph" header="Workflow Graph"><PanelSkeleton /></Panel>;
 
   return (
     <Panel id="workflow-graph" ref={panelRef} header="Workflow Graph" className="h-full">
