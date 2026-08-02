@@ -8,9 +8,15 @@ import { Activity } from "lucide-react";
 import { motion } from "framer-motion";
 import { fadeIn } from "@/lib/motion";
 
+import { mockKernel, mockTelemetry, mockWorkers } from "@/lib/mock-data/runtime";
+
 export const KernelStatusWidget = forwardRef((props, ref) => {
   const panelRef = useRef<PanelRef>(null);
-  const { kernel, telemetry, workers, isLoading, error } = useRuntimeContext();
+  const { kernel: rawKernel, telemetry: rawTelemetry, workers: rawWorkers, isLoading, error } = useRuntimeContext();
+
+  const kernel = rawKernel || mockKernel;
+  const telemetry = rawTelemetry || mockTelemetry;
+  const workers = (rawWorkers && rawWorkers.length > 0) ? rawWorkers : mockWorkers;
 
   useImperativeHandle(ref, () => ({
     initialize: () => {},

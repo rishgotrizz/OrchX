@@ -7,9 +7,12 @@ import { CardSkeleton } from "@/components/core/Skeleton";
 import { motion } from "framer-motion";
 import { fadeIn } from "@/lib/motion";
 
+import { mockMetrics } from "@/lib/mock-data/runtime";
+
 export const MetricsWidget = forwardRef((props, ref) => {
   const panelRef = useRef<PanelRef>(null);
-  const { metrics, isLoading, error } = useRuntimeContext();
+  const { metrics: rawMetrics, isLoading, error } = useRuntimeContext();
+  const metrics = rawMetrics || mockMetrics;
 
   useImperativeHandle(ref, () => ({
     initialize: () => {}, mount: () => {}, refresh: () => {}, sleep: () => {}, resume: () => {}, destroy: () => {}, onVisibilityChange: () => {}, onPermissionChange: () => {},
