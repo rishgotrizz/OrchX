@@ -12,9 +12,9 @@ export const mockProviders: RuntimeTypes.Provider[] = [
 ];
 
 export const mockWorkers: RuntimeTypes.Worker[] = [
-  { id: 'w-1', status: 'busy', assignedTaskId: 't-12', runtime: 'NodeJS v20', health: 'healthy' },
-  { id: 'w-2', status: 'idle', runtime: 'Python 3.11', health: 'healthy' },
-  { id: 'w-3', status: 'offline', runtime: 'Go 1.22', health: 'unhealthy' }
+  { id: 'groq-agent-01', status: 'busy', assignedTaskId: 'llama-3.1-8b-instant', runtime: 'Groq LPU (255ms)', health: 'healthy' },
+  { id: 'openrouter-agent-01', status: 'idle', assignedTaskId: 'meta-llama/llama-3.1-8b-instruct', runtime: 'OpenRouter (1970ms)', health: 'healthy' },
+  { id: 'gemini-agent-01', status: 'idle', assignedTaskId: 'gemini-1.5-pro', runtime: 'Google Gemini (280ms)', health: 'healthy' }
 ];
 
 export const mockQueues: RuntimeTypes.Queue[] = [
