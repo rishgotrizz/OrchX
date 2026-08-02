@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as DocTypes from '@/lib/types/document';
 import { DocumentsRepository } from '@/lib/repositories/DocumentsRepository';
 import { QueryKeys } from '@/lib/repositories/QueryKeys';
-import { mockProjects, mockFolders } from '@/lib/mock-data/documents';
+import { mockProjects, mockFolders, mockDocuments } from '@/lib/mock-data/documents';
 
 export interface DocumentsState {
   documents: DocTypes.OrchXDocument[];
