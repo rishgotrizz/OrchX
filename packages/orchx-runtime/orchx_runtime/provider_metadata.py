@@ -86,11 +86,11 @@ class ProviderMetadataRegistry:
             display_name="OpenRouter",
             required_credentials=["api_key"],
             supported_capabilities=["chat", "vision", "tool_calling"],
-            base_url="https://openrouter.ai/api",
-            chat_endpoint="/v1/chat/completions",
-            model_discovery_endpoint="/v1/models",
+            base_url="https://openrouter.ai/api/v1",
+            chat_endpoint="/chat/completions",
+            model_discovery_endpoint="/models",
             discovery_strategy="openai-v1",
-            default_models=["anthropic/claude-3-opus", "meta-llama/llama-3-70b-instruct"]
+            default_models=["meta-llama/llama-3.1-8b-instruct", "meta-llama/llama-3.3-70b-instruct"]
         ))
         self.register(ProviderMetadata(
             provider_id="ollama",
