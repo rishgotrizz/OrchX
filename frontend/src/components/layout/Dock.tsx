@@ -15,7 +15,7 @@ export function Dock() {
     if (id === 'documents-studio') return { title: 'Projects', icon: Box, desc: 'Knowledge vault, specifications, architecture blueprints, and document editor' };
     if (id === 'runtime-observatory') return { title: 'Runtime', icon: Activity, desc: 'Live kernel telemetry, active worker pool, and circuit-breaker provider routing' };
     if (id === 'preview-studio') return { title: 'Preview', icon: MonitorPlay, desc: 'Live web sandbox, dynamic component previews, and UI rendering' };
-    if (id === 'command-center') return { title: 'Settings', icon: Settings, desc: 'Provider key management, SecretVault policies, and system configuration' };
+    if (id === 'command-center') return { title: 'Settings', icon: Settings, desc: 'Provider key management, SecretVault policies, and system configuration', route: '/settings-studio' };
     return null;
   }
 
@@ -68,7 +68,7 @@ export function Dock() {
           return (
             <div key={workspace.id} className="relative group/navitem flex items-center">
               <Link 
-                href={workspace.route}
+                href={workspace.friendly?.route || workspace.route}
                 className={`flex-1 flex items-center space-x-3 px-3 py-2 rounded-md transition-colors ${isActive ? 'bg-surface-active text-text-primary font-medium' : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary'}`}
               >
                 <Icon className="w-4 h-4 shrink-0" />
