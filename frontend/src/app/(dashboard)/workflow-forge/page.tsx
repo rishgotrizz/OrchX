@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { PageTransition } from "@/components/shared/PageTransition";
 import { 
   ReactFlow, 
@@ -19,124 +20,139 @@ import {
   Plus, 
   Info, 
   Bot, 
-  Zap, 
   Wrench, 
   ShieldCheck, 
   Database, 
   RotateCw, 
   Sparkles,
-  CheckCircle2,
-  Cpu
+  CheckCircle2
 } from "lucide-react";
 import { motion } from "framer-motion";
 
-const INITIAL_NODES = [
-  {
-    id: "node-trigger",
-    type: "input",
-    data: { label: "⚡ Webhook Trigger" },
-    position: { x: 50, y: 220 },
-    style: {
-      background: "rgba(168, 85, 247, 0.15)",
-      borderColor: "#a855f7",
-      color: "#f3f4f6",
-      borderRadius: "12px",
-      padding: "14px 18px",
-      fontWeight: 600,
-      fontSize: "13px",
-      boxShadow: "0 0 20px rgba(168, 85, 247, 0.2)"
-    }
-  },
-  {
-    id: "node-planner",
-    data: { label: "🤖 Planner Agent (llama-3.3-70b)" },
-    position: { x: 280, y: 120 },
-    style: {
-      background: "rgba(56, 189, 248, 0.15)",
-      borderColor: "#38bdf8",
-      color: "#f3f4f6",
-      borderRadius: "12px",
-      padding: "14px 18px",
-      fontWeight: 600,
-      fontSize: "13px",
-      boxShadow: "0 0 20px rgba(56, 189, 248, 0.2)"
-    }
-  },
-  {
-    id: "node-search",
-    data: { label: "🔧 Web Search Tool" },
-    position: { x: 280, y: 320 },
-    style: {
-      background: "rgba(234, 179, 8, 0.15)",
-      borderColor: "#eab308",
-      color: "#f3f4f6",
-      borderRadius: "12px",
-      padding: "14px 18px",
-      fontWeight: 600,
-      fontSize: "13px"
-    }
-  },
-  {
-    id: "node-groq",
-    data: { label: "🧠 Groq Llama 3.1 8B (Sub-second)" },
-    position: { x: 560, y: 220 },
-    style: {
-      background: "rgba(34, 197, 94, 0.15)",
-      borderColor: "#22c55e",
-      color: "#f3f4f6",
-      borderRadius: "12px",
-      padding: "14px 18px",
-      fontWeight: 600,
-      fontSize: "13px",
-      boxShadow: "0 0 20px rgba(34, 197, 94, 0.2)"
-    }
-  },
-  {
-    id: "node-vault",
-    data: { label: "🔐 SecretVault Policy Guard" },
-    position: { x: 840, y: 120 },
-    style: {
-      background: "rgba(239, 68, 68, 0.15)",
-      borderColor: "#ef4444",
-      color: "#f3f4f6",
-      borderRadius: "12px",
-      padding: "14px 18px",
-      fontWeight: 600,
-      fontSize: "13px"
-    }
-  },
-  {
-    id: "node-db",
-    type: "output",
-    data: { label: "💾 SQLite Event Logger" },
-    position: { x: 840, y: 320 },
-    style: {
-      background: "rgba(148, 163, 184, 0.15)",
-      borderColor: "#94a3b8",
-      color: "#f3f4f6",
-      borderRadius: "12px",
-      padding: "14px 18px",
-      fontWeight: 600,
-      fontSize: "13px"
-    }
-  }
-];
+function WorkflowForgeContent() {
+  const searchParams = useSearchParams();
+  const [activeMissionName, setActiveMissionName] = useState<string>("Active Agentic Goal");
 
-const INITIAL_EDGES = [
-  { id: "e-trig-plan", source: "node-trigger", target: "node-planner", animated: true, style: { stroke: "#a855f7", strokeWidth: 2 } },
-  { id: "e-trig-srch", source: "node-trigger", target: "node-search", animated: true, style: { stroke: "#a855f7", strokeWidth: 2 } },
-  { id: "e-plan-groq", source: "node-planner", target: "node-groq", animated: true, style: { stroke: "#38bdf8", strokeWidth: 2 } },
-  { id: "e-srch-groq", source: "node-search", target: "node-groq", animated: true, style: { stroke: "#eab308", strokeWidth: 2 } },
-  { id: "e-groq-vault", source: "node-groq", target: "node-vault", animated: true, style: { stroke: "#22c55e", strokeWidth: 2 } },
-  { id: "e-groq-db", source: "node-groq", target: "node-db", animated: true, style: { stroke: "#22c55e", strokeWidth: 2 } }
-];
-
-export default function WorkflowForge() {
-  const [nodes, setNodes, onNodesChange] = useNodesState(INITIAL_NODES);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(INITIAL_EDGES);
+  const [nodes, setNodes, onNodesChange] = useNodesState<any>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<any>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [selectedNode, setSelectedNode] = useState<any>(null);
   const [executionLog, setExecutionLog] = useState<string[]>([]);
+
+  useEffect(() => {
+    let missionParam = searchParams?.get('mission');
+    if (!missionParam && typeof window !== 'undefined') {
+      missionParam = localStorage.getItem('orchx_active_mission');
+    }
+    
+    const missionTitle = missionParam && missionParam.trim() ? missionParam.trim() : "Active Agentic Goal";
+    setActiveMissionName(missionTitle);
+
+    // Dynamically build workflow nodes based on active mission!
+    const dynamicNodes = [
+      {
+        id: "node-trigger",
+        type: "input",
+        data: { label: `⚡ Trigger: ${missionTitle}` },
+        position: { x: 50, y: 220 },
+        style: {
+          background: "rgba(168, 85, 247, 0.15)",
+          borderColor: "#a855f7",
+          color: "#f3f4f6",
+          borderRadius: "12px",
+          padding: "14px 18px",
+          fontWeight: 600,
+          fontSize: "13px",
+          boxShadow: "0 0 20px rgba(168, 85, 247, 0.2)"
+        }
+      },
+      {
+        id: "node-planner",
+        data: { label: `🤖 ${missionTitle} Planner Agent` },
+        position: { x: 280, y: 120 },
+        style: {
+          background: "rgba(56, 189, 248, 0.15)",
+          borderColor: "#38bdf8",
+          color: "#f3f4f6",
+          borderRadius: "12px",
+          padding: "14px 18px",
+          fontWeight: 600,
+          fontSize: "13px",
+          boxShadow: "0 0 20px rgba(56, 189, 248, 0.2)"
+        }
+      },
+      {
+        id: "node-tool",
+        data: { label: `🔧 ${missionTitle} Logic & State Tool` },
+        position: { x: 280, y: 320 },
+        style: {
+          background: "rgba(234, 179, 8, 0.15)",
+          borderColor: "#eab308",
+          color: "#f3f4f6",
+          borderRadius: "12px",
+          padding: "14px 18px",
+          fontWeight: 600,
+          fontSize: "13px"
+        }
+      },
+      {
+        id: "node-groq",
+        data: { label: "🧠 Groq Llama 3.1 8B (257ms Latency)" },
+        position: { x: 580, y: 220 },
+        style: {
+          background: "rgba(34, 197, 94, 0.15)",
+          borderColor: "#22c55e",
+          color: "#f3f4f6",
+          borderRadius: "12px",
+          padding: "14px 18px",
+          fontWeight: 600,
+          fontSize: "13px",
+          boxShadow: "0 0 20px rgba(34, 197, 94, 0.2)"
+        }
+      },
+      {
+        id: "node-vault",
+        data: { label: "🔐 SecretVault RBAC Guard" },
+        position: { x: 860, y: 120 },
+        style: {
+          background: "rgba(239, 68, 68, 0.15)",
+          borderColor: "#ef4444",
+          color: "#f3f4f6",
+          borderRadius: "12px",
+          padding: "14px 18px",
+          fontWeight: 600,
+          fontSize: "13px"
+        }
+      },
+      {
+        id: "node-db",
+        type: "output",
+        data: { label: `💾 ${missionTitle} Store & Logger` },
+        position: { x: 860, y: 320 },
+        style: {
+          background: "rgba(148, 163, 184, 0.15)",
+          borderColor: "#94a3b8",
+          color: "#f3f4f6",
+          borderRadius: "12px",
+          padding: "14px 18px",
+          fontWeight: 600,
+          fontSize: "13px"
+        }
+      }
+    ];
+
+    const dynamicEdges = [
+      { id: "e-trig-plan", source: "node-trigger", target: "node-planner", animated: true, style: { stroke: "#a855f7", strokeWidth: 2 } },
+      { id: "e-trig-tool", source: "node-trigger", target: "node-tool", animated: true, style: { stroke: "#a855f7", strokeWidth: 2 } },
+      { id: "e-plan-groq", source: "node-planner", target: "node-groq", animated: true, style: { stroke: "#38bdf8", strokeWidth: 2 } },
+      { id: "e-tool-groq", source: "node-tool", target: "node-groq", animated: true, style: { stroke: "#eab308", strokeWidth: 2 } },
+      { id: "e-groq-vault", source: "node-groq", target: "node-vault", animated: true, style: { stroke: "#22c55e", strokeWidth: 2 } },
+      { id: "e-groq-db", source: "node-groq", target: "node-db", animated: true, style: { stroke: "#22c55e", strokeWidth: 2 } }
+    ];
+
+    setNodes(dynamicNodes);
+    setEdges(dynamicEdges);
+  }, [searchParams, setNodes, setEdges]);
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge({ ...params, animated: true, style: { stroke: "#38bdf8", strokeWidth: 2 } }, eds)),
@@ -165,19 +181,19 @@ export default function WorkflowForge() {
   const handleRunWorkflow = () => {
     setIsRunning(true);
     setExecutionLog([
-      "[0.00s] Initializing OrchX Workflow Forge execution...",
-      "[0.12s] Webhook Trigger fired payload.",
-      "[0.28s] Planner Agent analyzing requirements...",
-      "[0.55s] Web Search Tool fetched 12 reference items.",
-      "[0.82s] Groq Llama 3.1 8B generated sub-second completion (257ms latency).",
-      "[0.95s] SecretVault RBAC policy check passed.",
-      "[1.10s] SQLite Event Logger stored trace ID ex-84920.",
-      "[1.15s] Workflow Execution SUCCESS!"
+      `[0.00s] Initializing ${activeMissionName} pipeline execution...`,
+      `[0.12s] Webhook Trigger received goal: ${activeMissionName}.`,
+      `[0.28s] ${activeMissionName} Planner Agent analyzing architecture & dependencies...`,
+      `[0.55s] ${activeMissionName} Logic & State Tool executed successfully.`,
+      `[0.82s] Groq Llama 3.1 8B completed reasoning in 257ms with zero errors.`,
+      `[0.95s] SecretVault RBAC policy check passed.`,
+      `[1.10s] SQLite Event Logger recorded trace ID ex-${Math.floor(10000 + Math.random() * 90000)}.`,
+      `[1.15s] ${activeMissionName} Pipeline Execution SUCCESS!`
     ]);
 
     setTimeout(() => {
       setIsRunning(false);
-    }, 2500);
+    }, 2200);
   };
 
   return (
@@ -192,18 +208,20 @@ export default function WorkflowForge() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-lg font-bold tracking-tight text-text-primary">Workflow Forge</h1>
+                <h1 className="text-lg font-bold tracking-tight text-text-primary">
+                  Workflow Forge: <span className="text-accent-primary">{activeMissionName}</span>
+                </h1>
                 <div className="relative group/forgeinfo inline-block">
                   <button type="button" className="p-0.5 text-text-muted hover:text-accent-primary transition-colors">
                     <Info className="w-4 h-4" />
                   </button>
                   <div className="absolute left-0 top-full mt-2 w-72 p-3 bg-void border border-glass-border rounded-xl shadow-2xl text-xs text-text-secondary opacity-0 pointer-events-none group-hover/forgeinfo:opacity-100 transition-opacity z-50">
-                    <span className="font-semibold text-text-primary block mb-1">Workflow Canvas Engine</span>
-                    Visual multi-agent pipeline orchestrator. Drag, connect, and execute LLM routing, tool execution, and security policies.
+                    <span className="font-semibold text-text-primary block mb-1">Dynamic Mission Pipeline</span>
+                    Visual multi-agent pipeline orchestrator generated dynamically for {activeMissionName}.
                   </div>
                 </div>
               </div>
-              <p className="text-xs text-text-muted">Visual Multi-Agent Pipeline Orchestrator</p>
+              <p className="text-xs text-text-muted">Dynamic Multi-Agent Pipeline for {activeMissionName}</p>
             </div>
           </div>
 
@@ -229,7 +247,7 @@ export default function WorkflowForge() {
               
               <div className="flex flex-col space-y-2">
                 <button 
-                  onClick={() => addNode('agent', '🤖 Code Reviewer Agent', '#38bdf8')}
+                  onClick={() => addNode('agent', `🤖 ${activeMissionName} Reviewer`, '#38bdf8')}
                   className="flex items-center space-x-2.5 p-2.5 bg-surface hover:bg-surface-hover border border-glass-border rounded-lg text-xs font-medium text-text-primary text-left transition-colors"
                 >
                   <Bot className="w-4 h-4 text-accent-primary" />
@@ -312,6 +330,7 @@ export default function WorkflowForge() {
                   <span className="text-xs text-text-muted">Node ID: {selectedNode.id}</span>
                 </div>
                 <div className="text-xs text-text-secondary bg-void p-2.5 rounded-lg border border-glass-border space-y-1">
+                  <div className="flex justify-between"><span>Mission:</span> <span className="font-medium text-text-primary">{activeMissionName}</span></div>
                   <div className="flex justify-between"><span>Status:</span> <span className="text-status-success font-mono">ACTIVE</span></div>
                   <div className="flex justify-between"><span>Latency:</span> <span className="font-mono">120ms</span></div>
                   <div className="flex justify-between"><span>Engine:</span> <span className="font-mono">OrchX Core v1.4</span></div>
@@ -324,5 +343,13 @@ export default function WorkflowForge() {
 
       </div>
     </PageTransition>
+  );
+}
+
+export default function WorkflowForge() {
+  return (
+    <Suspense fallback={<div className="h-full flex items-center justify-center bg-void text-text-muted">Loading Workflow Forge...</div>}>
+      <WorkflowForgeContent />
+    </Suspense>
   );
 }

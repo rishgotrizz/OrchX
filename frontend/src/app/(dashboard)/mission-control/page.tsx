@@ -37,11 +37,16 @@ export default function MissionControlPage() {
 
     // Dynamic task & decision generation based on user goal
     setTimeout(() => {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('orchx_active_mission', titleSubject);
+      }
+
       setMessages(prev => [
         ...prev,
         {
           role: "assistant",
           content: `I've analyzed your goal and initialized an autonomous mission execution plan for ${titleSubject}.`,
+          missionName: titleSubject,
           tasks: [
             { id: 't-1', name: `Define ${titleSubject} Architecture & Scope`, status: 'Completed', detail: 'Analyzed domain model, core schemas, and interfaces.' },
             { id: 't-2', name: 'Construct Interactive UI Components', status: 'In Progress', detail: 'Building responsive layouts and state handlers.' },
@@ -177,7 +182,7 @@ export default function MissionControlPage() {
                           </div>
 
                           <div className="border-t border-glass-divider pt-3 flex items-center space-x-3">
-                            <Link href="/workflow-forge" className="flex-1 text-center py-2 bg-accent-primary text-white hover:bg-accent-hover rounded-lg text-xs font-medium transition-colors">
+                            <Link href={`/workflow-forge?mission=${encodeURIComponent(msg.missionName || 'Active Mission')}`} className="flex-1 text-center py-2 bg-accent-primary text-white hover:bg-accent-hover rounded-lg text-xs font-medium transition-colors">
                               Execute Mission
                             </Link>
                             <Link href="/runtime-observatory" className="px-4 py-2 bg-surface-hover text-text-primary hover:bg-surface-active rounded-lg text-xs font-medium transition-colors border border-glass-border">
