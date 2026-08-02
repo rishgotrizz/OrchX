@@ -79,7 +79,7 @@ class ProviderMetadataRegistry:
             chat_endpoint="/v1/chat/completions",
             model_discovery_endpoint="/v1/models",
             discovery_strategy="openai-v1",
-            default_models=["llama3-70b-8192", "mixtral-8x7b-32768"]
+            default_models=["llama-3.1-8b-instant", "llama-3.3-70b-versatile"]
         ))
         self.register(ProviderMetadata(
             provider_id="openrouter",
