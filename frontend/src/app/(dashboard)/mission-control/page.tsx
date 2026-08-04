@@ -2,13 +2,36 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { MissionProvider } from "@/contexts/MissionContext";
-import { Paperclip, Mic, ArrowUp, ChevronDown, FileText, Database, Box, Info } from "lucide-react";
+import { 
+  Paperclip, 
+  Mic, 
+  ArrowUp, 
+  ChevronDown, 
+  FileText, 
+  Database, 
+  Box, 
+  Info, 
+  MonitorPlay, 
+  Columns, 
+  Maximize2, 
+  Smartphone, 
+  Tablet, 
+  Monitor, 
+  Sparkles, 
+  ExternalLink,
+  RotateCw,
+  Code
+} from "lucide-react";
 import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function MissionControlPage() {
   const [prompt, setPrompt] = useState("");
   const [isChatting, setIsChatting] = useState(false);
   const [messages, setMessages] = useState<any[]>([]);
+  const [showPreview, setShowPreview] = useState(true);
+  const [deviceProfile, setDeviceProfile] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+  const [activeMissionTitle, setActiveMissionTitle] = useState<string>("Active Project");
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const handleSubmit = (e?: React.FormEvent, customPrompt?: string) => {
@@ -21,7 +44,6 @@ export default function MissionControlPage() {
     setMessages(prev => [...prev, newMsg]);
     setPrompt("");
 
-    // Helper to generate dynamic title from user input
     const cleanText = textToSubmit
       .replace(/^i (wanna|want to|would like to) (build|create|make)/i, '')
       .replace(/^(build|create|make)/i, '')
@@ -31,27 +53,25 @@ export default function MissionControlPage() {
       ? cleanText.charAt(0).toUpperCase() + cleanText.slice(1) 
       : textToSubmit.trim();
 
-    const cardTitle = titleSubject.toLowerCase().includes('prd') || titleSubject.toLowerCase().includes('mvp')
-      ? titleSubject
-      : `${titleSubject} PRD`;
+    setActiveMissionTitle(titleSubject);
 
-    // Dynamic task & decision generation based on user goal
+    // Save active mission & history
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('orchx_active_mission', titleSubject);
+
+      const existingHistory = JSON.parse(localStorage.getItem('orchx_chat_history') || '[]');
+      const newHistoryItem = { id: `chat-${Date.now()}`, title: titleSubject, createdAt: new Date().toISOString() };
+      const updatedHistory = [newHistoryItem, ...existingHistory.filter((item: any) => item.title !== titleSubject)];
+      localStorage.setItem('orchx_chat_history', JSON.stringify(updatedHistory));
+      window.dispatchEvent(new Event('orchx_chat_updated'));
+    }
+
     setTimeout(() => {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('orchx_active_mission', titleSubject);
-
-        const existingHistory = JSON.parse(localStorage.getItem('orchx_chat_history') || '[]');
-        const newHistoryItem = { id: `chat-${Date.now()}`, title: titleSubject, createdAt: new Date().toISOString() };
-        const updatedHistory = [newHistoryItem, ...existingHistory.filter((item: any) => item.title !== titleSubject)];
-        localStorage.setItem('orchx_chat_history', JSON.stringify(updatedHistory));
-        window.dispatchEvent(new Event('orchx_chat_updated'));
-      }
-
       setMessages(prev => [
         ...prev,
         {
           role: "assistant",
-          content: `I've analyzed your goal and initialized an autonomous mission execution plan for ${titleSubject}.`,
+          content: `I've analyzed your request and initialized a side-by-side agent execution and live project sandbox for ${titleSubject}.`,
           missionName: titleSubject,
           tasks: [
             { id: 't-1', name: `Define ${titleSubject} Architecture & Scope`, status: 'Completed', detail: 'Analyzed domain model, core schemas, and interfaces.' },
@@ -82,170 +102,315 @@ export default function MissionControlPage() {
     }
   }, [messages]);
 
+  const frameWidths = {
+    desktop: 'w-full h-full border-none rounded-none',
+    tablet: 'w-[768px] h-[90%] border border-glass-border rounded-xl shadow-2xl my-auto',
+    mobile: 'w-[375px] h-[90%] border border-glass-border rounded-2xl shadow-2xl my-auto'
+  };
+
   return (
     <MissionProvider>
-      <div className="flex flex-col h-full bg-void">
+      <div className="flex flex-col h-full bg-void overflow-hidden">
         
-        {/* Main Content Area */}
-        <div className="flex-1 overflow-y-auto">
-          {!isChatting ? (
-            /* Empty State / Welcome Screen */
-            <div className="h-full flex flex-col items-center justify-center max-w-3xl mx-auto px-4 pb-32">
-              <h1 className="text-3xl font-medium text-text-primary mb-12">What would you like to build today?</h1>
-              
-              <div className="grid grid-cols-2 gap-4 w-full opacity-60">
-                <button onClick={() => handleSubmit(undefined, "Build a CRM Platform")} className="text-left p-4 border border-glass-divider rounded-xl hover:bg-surface-hover transition-colors">
-                  <h3 className="text-sm font-medium text-text-primary mb-1">Build CRM</h3>
-                  <p className="text-xs text-text-muted">Start a new customer relationship management tool</p>
+        {/* Top Split View Bar */}
+        <div className="px-6 py-3 border-b border-glass-border flex items-center justify-between bg-surface shrink-0 z-20">
+          <div className="flex items-center space-x-3">
+            <span className="text-sm font-bold text-text-primary flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-accent-primary" />
+              <span>Mission Control</span>
+              {activeMissionTitle && (
+                <span className="text-xs px-2 py-0.5 rounded bg-accent-primary/10 text-accent-primary font-mono font-medium">
+                  {activeMissionTitle}
+                </span>
+              )}
+            </span>
+          </div>
+
+          <div className="flex items-center space-x-3">
+            {/* View Mode Toggle */}
+            <div className="flex items-center bg-void p-1 rounded-lg border border-glass-border">
+              <button
+                onClick={() => setShowPreview(true)}
+                className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${showPreview ? 'bg-accent-primary text-white shadow-glow' : 'text-text-muted hover:text-text-primary'}`}
+              >
+                <Columns className="w-3.5 h-3.5" />
+                <span>Side-by-Side Preview</span>
+              </button>
+              <button
+                onClick={() => setShowPreview(false)}
+                className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${!showPreview ? 'bg-accent-primary text-white shadow-glow' : 'text-text-muted hover:text-text-primary'}`}
+              >
+                <Maximize2 className="w-3.5 h-3.5" />
+                <span>Focus Chat</span>
+              </button>
+            </div>
+
+            {/* Device Profile Switcher (Only visible when preview active) */}
+            {showPreview && (
+              <div className="flex items-center space-x-1 bg-void p-1 rounded-lg border border-glass-border">
+                <button
+                  onClick={() => setDeviceProfile('desktop')}
+                  className={`p-1 rounded text-xs transition-colors ${deviceProfile === 'desktop' ? 'bg-surface-hover text-accent-primary' : 'text-text-muted hover:text-text-primary'}`}
+                  title="Desktop View"
+                >
+                  <Monitor className="w-3.5 h-3.5" />
                 </button>
-                <button onClick={() => handleSubmit(undefined, "Create Ecommerce Store")} className="text-left p-4 border border-glass-divider rounded-xl hover:bg-surface-hover transition-colors">
-                  <h3 className="text-sm font-medium text-text-primary mb-1">Create Ecommerce Store</h3>
-                  <p className="text-xs text-text-muted">Generate a full-stack Next.js storefront</p>
+                <button
+                  onClick={() => setDeviceProfile('tablet')}
+                  className={`p-1 rounded text-xs transition-colors ${deviceProfile === 'tablet' ? 'bg-surface-hover text-accent-primary' : 'text-text-muted hover:text-text-primary'}`}
+                  title="Tablet View"
+                >
+                  <Tablet className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => setDeviceProfile('mobile')}
+                  className={`p-1 rounded text-xs transition-colors ${deviceProfile === 'mobile' ? 'bg-surface-hover text-accent-primary' : 'text-text-muted hover:text-text-primary'}`}
+                  title="Mobile View"
+                >
+                  <Smartphone className="w-3.5 h-3.5" />
                 </button>
               </div>
-            </div>
-          ) : (
-            /* Active Conversation Thread */
-            <div className="max-w-3xl mx-auto px-4 py-12 flex flex-col space-y-8 pb-40">
-              {messages.map((msg, idx) => (
-                <div key={idx} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                  {msg.role === 'user' ? (
-                    <div className="bg-surface-active px-5 py-3 rounded-2xl rounded-tr-sm max-w-[80%] text-text-primary text-[15px] leading-relaxed">
-                      {msg.content}
-                    </div>
-                  ) : (
-                    <div className="flex flex-col space-y-4 max-w-[90%] w-full">
-                      <div className="text-text-primary text-[15px] leading-relaxed">
-                        {msg.content}
-                      </div>
-                      
-                      {/* Autonomous Task Plan Card */}
-                      {msg.tasks && (
-                        <div className="bg-surface border border-glass-border rounded-xl p-5 flex flex-col space-y-4 shadow-lg w-full">
-                          <div className="flex items-center justify-between border-b border-glass-divider pb-3">
-                            <span className="font-medium text-text-primary text-sm flex items-center gap-2">
-                              <Box className="w-4 h-4 text-accent-primary" /> Autonomous Action Plan
-                              <div className="relative group/info inline-block">
-                                <button type="button" className="p-0.5 text-text-muted hover:text-accent-primary transition-colors">
-                                  <Info className="w-3.5 h-3.5" />
-                                </button>
-                                <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-64 p-2.5 bg-void border border-glass-border rounded-xl shadow-2xl text-[11px] text-text-secondary opacity-0 pointer-events-none group-hover/info:opacity-100 transition-opacity z-50">
-                                  Sequenced execution steps generated by OrchX planner to fulfill your goal.
-                                </div>
-                              </div>
-                            </span>
-                            <span className="text-xs px-2 py-0.5 rounded bg-accent-primary/10 text-accent-primary font-mono uppercase">
-                              Active Mission
-                            </span>
-                          </div>
-
-                          <div className="flex flex-col space-y-2.5">
-                            {msg.tasks.map((task: any) => (
-                              <div key={task.id} className="flex items-start justify-between p-2.5 bg-void/50 border border-glass-divider rounded-lg">
-                                <div className="flex flex-col space-y-0.5">
-                                  <span className="text-xs font-medium text-text-primary">{task.name}</span>
-                                  <span className="text-[11px] text-text-muted">{task.detail}</span>
-                                </div>
-                                <span className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded shrink-0 ml-3 ${
-                                  task.status === 'Completed' ? 'bg-status-success/10 text-status-success' :
-                                  task.status === 'In Progress' ? 'bg-status-warning/10 text-status-warning animate-pulse' :
-                                  'bg-surface-hover text-text-muted'
-                                }`}>
-                                  {task.status}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Autonomous Decision Ledger Card */}
-                      {msg.decisions && (
-                        <div className="bg-surface border border-glass-border rounded-xl p-5 flex flex-col space-y-4 shadow-lg w-full">
-                          <div className="flex items-center justify-between border-b border-glass-divider pb-3">
-                            <span className="font-medium text-text-primary text-sm flex items-center gap-2">
-                              <Database className="w-4 h-4 text-status-success" /> Autonomous Decisions Made
-                              <div className="relative group/info inline-block">
-                                <button type="button" className="p-0.5 text-text-muted hover:text-accent-primary transition-colors">
-                                  <Info className="w-3.5 h-3.5" />
-                                </button>
-                                <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-64 p-2.5 bg-void border border-glass-border rounded-xl shadow-2xl text-[11px] text-text-secondary opacity-0 pointer-events-none group-hover/info:opacity-100 transition-opacity z-50">
-                                  Architectural choices and security policies evaluated and chosen by OrchX engine.
-                                </div>
-                              </div>
-                            </span>
-                            <span className="text-xs text-text-muted">OrchX Decision Engine</span>
-                          </div>
-
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                            {msg.decisions.map((dec: any) => (
-                              <div key={dec.id} className="p-3 bg-void/50 border border-glass-divider rounded-lg flex flex-col space-y-1">
-                                <span className="text-[11px] font-mono text-accent-primary uppercase">{dec.title}</span>
-                                <span className="text-xs font-medium text-text-primary">{dec.choice}</span>
-                                <span className="text-[10px] text-text-muted">{dec.reason}</span>
-                              </div>
-                            ))}
-                          </div>
-
-                          <div className="border-t border-glass-divider pt-3 flex items-center space-x-3">
-                            <Link href={`/workflow-forge?mission=${encodeURIComponent(msg.missionName || 'Active Mission')}`} className="flex-1 text-center py-2 bg-accent-primary text-white hover:bg-accent-hover rounded-lg text-xs font-medium transition-colors">
-                              Execute Mission
-                            </Link>
-                            <Link href="/runtime-observatory" className="px-4 py-2 bg-surface-hover text-text-primary hover:bg-surface-active rounded-lg text-xs font-medium transition-colors border border-glass-border">
-                              Inspect Decision Log
-                            </Link>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
-              <div ref={bottomRef} />
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
-        {/* Persistent Bottom Prompt */}
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-void via-void to-transparent pt-10 pb-8 px-4 flex justify-center">
-          <div className="w-full max-w-3xl relative">
-            <div className="bg-surface border border-glass-border rounded-2xl shadow-2xl flex flex-col">
-              <textarea
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Ask OrchX..."
-                className="w-full bg-transparent resize-none p-4 pb-2 focus:outline-none text-text-primary placeholder:text-text-muted text-[15px] leading-relaxed max-h-48 overflow-y-auto"
-                rows={1}
-                style={{ minHeight: '60px' }}
-              />
-              <div className="flex items-center justify-between p-2 pt-0">
-                <div className="flex items-center space-x-1">
-                  <button className="p-2 text-text-muted hover:text-text-primary hover:bg-surface-hover rounded-lg transition-colors">
-                    <Paperclip className="w-4 h-4" />
-                  </button>
-                  <button className="p-2 text-text-muted hover:text-text-primary hover:bg-surface-hover rounded-lg transition-colors">
-                    <Mic className="w-4 h-4" />
-                  </button>
-                  <div className="h-4 w-[1px] bg-glass-divider mx-1" />
-                  <button className="flex items-center space-x-1 px-2 py-1.5 text-text-muted hover:text-text-primary hover:bg-surface-hover rounded-lg transition-colors text-xs font-medium">
-                    <span>OrchX-4</span>
-                    <ChevronDown className="w-3 h-3" />
-                  </button>
+        {/* Dual Panel Workspace */}
+        <div className="flex-1 flex overflow-hidden relative">
+          
+          {/* Left Panel: Chat & Action Plans */}
+          <div className={`${showPreview ? 'w-1/2 border-r border-glass-border' : 'w-full'} flex flex-col h-full bg-void transition-all duration-300 relative`}>
+            
+            <div className="flex-1 overflow-y-auto px-6 py-6 pb-36">
+              {!isChatting ? (
+                /* Welcome Screen */
+                <div className="h-full flex flex-col items-center justify-center max-w-xl mx-auto text-center space-y-8">
+                  <div className="p-4 rounded-full bg-accent-primary/10 border border-accent-primary/20 text-accent-primary shadow-glow">
+                    <Sparkles className="w-8 h-8" />
+                  </div>
+                  <div className="space-y-2">
+                    <h1 className="text-2xl font-bold tracking-tight text-text-primary">What would you like to build today?</h1>
+                    <p className="text-xs text-text-muted">Type any project goal to start side-by-side agent execution and live preview generation.</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3 w-full">
+                    <button onClick={() => handleSubmit(undefined, "Build a Calculator App")} className="text-left p-3.5 bg-surface border border-glass-border rounded-xl hover:bg-surface-hover transition-colors flex flex-col space-y-1">
+                      <span className="text-xs font-bold text-text-primary">Build Calculator App</span>
+                      <span className="text-[11px] text-text-muted">Interactive arithmetic calculator layout</span>
+                    </button>
+                    <button onClick={() => handleSubmit(undefined, "Build CRM Platform")} className="text-left p-3.5 bg-surface border border-glass-border rounded-xl hover:bg-surface-hover transition-colors flex flex-col space-y-1">
+                      <span className="text-xs font-bold text-text-primary">Build CRM Platform</span>
+                      <span className="text-[11px] text-text-muted">Customer & deal management system</span>
+                    </button>
+                  </div>
                 </div>
-                <button 
-                  onClick={handleSubmit}
-                  disabled={!prompt.trim()}
-                  className="p-2 bg-accent-primary text-white rounded-lg hover:bg-accent-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <ArrowUp className="w-4 h-4" />
-                </button>
+              ) : (
+                /* Active Thread */
+                <div className="space-y-6">
+                  {messages.map((msg, idx) => (
+                    <div key={idx} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                      {msg.role === 'user' ? (
+                        <div className="bg-surface-active px-4 py-2.5 rounded-2xl rounded-tr-sm max-w-[85%] text-text-primary text-sm leading-relaxed">
+                          {msg.content}
+                        </div>
+                      ) : (
+                        <div className="flex flex-col space-y-4 max-w-full w-full">
+                          <div className="text-text-primary text-sm leading-relaxed">
+                            {msg.content}
+                          </div>
+                          
+                          {/* Task Plan */}
+                          {msg.tasks && (
+                            <div className="bg-surface border border-glass-border rounded-xl p-4 flex flex-col space-y-3 shadow-lg">
+                              <div className="flex items-center justify-between border-b border-glass-divider pb-2">
+                                <span className="font-semibold text-text-primary text-xs flex items-center gap-1.5">
+                                  <Box className="w-3.5 h-3.5 text-accent-primary" /> Autonomous Action Plan
+                                </span>
+                                <span className="text-[10px] px-2 py-0.5 rounded bg-accent-primary/10 text-accent-primary font-mono uppercase">
+                                  {msg.missionName || 'Active'}
+                                </span>
+                              </div>
+
+                              <div className="flex flex-col space-y-2">
+                                {msg.tasks.map((task: any) => (
+                                  <div key={task.id} className="flex items-start justify-between p-2 bg-void/50 border border-glass-divider rounded-lg text-xs">
+                                    <div className="flex flex-col">
+                                      <span className="font-medium text-text-primary">{task.name}</span>
+                                      <span className="text-[10px] text-text-muted">{task.detail}</span>
+                                    </div>
+                                    <span className={`text-[9px] font-mono uppercase px-1.5 py-0.5 rounded shrink-0 ${
+                                      task.status === 'Completed' ? 'bg-status-success/10 text-status-success' :
+                                      task.status === 'In Progress' ? 'bg-status-warning/10 text-status-warning animate-pulse' :
+                                      'bg-surface-hover text-text-muted'
+                                    }`}>
+                                      {task.status}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Decision Ledger */}
+                          {msg.decisions && (
+                            <div className="bg-surface border border-glass-border rounded-xl p-4 flex flex-col space-y-3 shadow-lg">
+                              <div className="flex items-center justify-between border-b border-glass-divider pb-2">
+                                <span className="font-semibold text-text-primary text-xs flex items-center gap-1.5">
+                                  <Database className="w-3.5 h-3.5 text-status-success" /> Decisions Ledger
+                                </span>
+                              </div>
+
+                              <div className="grid grid-cols-3 gap-2">
+                                {msg.decisions.map((dec: any) => (
+                                  <div key={dec.id} className="p-2 bg-void/50 border border-glass-divider rounded-lg flex flex-col">
+                                    <span className="text-[9px] font-mono text-accent-primary uppercase">{dec.title}</span>
+                                    <span className="text-[11px] font-medium text-text-primary truncate">{dec.choice}</span>
+                                  </div>
+                                ))}
+                              </div>
+
+                              <div className="border-t border-glass-divider pt-2.5 flex items-center space-x-2">
+                                <Link href={`/workflow-forge?mission=${encodeURIComponent(msg.missionName || 'Active Mission')}`} className="flex-1 text-center py-1.5 bg-accent-primary text-white hover:bg-accent-hover rounded-md text-xs font-medium transition-colors">
+                                  Execute Mission
+                                </Link>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  <div ref={bottomRef} />
+                </div>
+              )}
+            </div>
+
+            {/* Input Bar */}
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-void via-void to-transparent pt-6 pb-4 px-4 flex justify-center z-10">
+              <div className="w-full relative">
+                <div className="bg-surface border border-glass-border rounded-xl shadow-2xl flex flex-col">
+                  <textarea
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Ask OrchX to build..."
+                    className="w-full bg-transparent resize-none p-3 pb-1 focus:outline-none text-text-primary placeholder:text-text-muted text-xs leading-relaxed max-h-32 overflow-y-auto"
+                    rows={1}
+                    style={{ minHeight: '48px' }}
+                  />
+                  <div className="flex items-center justify-between p-2 pt-0">
+                    <div className="flex items-center space-x-1">
+                      <button className="p-1.5 text-text-muted hover:text-text-primary hover:bg-surface-hover rounded transition-colors">
+                        <Paperclip className="w-3.5 h-3.5" />
+                      </button>
+                      <button className="p-1.5 text-text-muted hover:text-text-primary hover:bg-surface-hover rounded transition-colors">
+                        <Mic className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                    <button 
+                      onClick={handleSubmit}
+                      disabled={!prompt.trim()}
+                      className="p-1.5 bg-accent-primary text-white rounded-lg hover:bg-accent-hover transition-colors disabled:opacity-50"
+                    >
+                      <ArrowUp className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="text-center mt-3 text-[10px] text-text-muted/60">
-              OrchX can make mistakes. Verify important information.
-            </div>
+
           </div>
+
+          {/* Right Panel: Side-by-Side Live Preview Sandbox */}
+          {showPreview && (
+            <div className="w-1/2 flex flex-col h-full bg-void-elevated p-4 overflow-hidden items-center justify-center relative">
+              <div className={frameWidths[deviceProfile]}>
+                
+                <div className="w-full h-full bg-surface border border-glass-border rounded-xl flex flex-col overflow-hidden shadow-2xl">
+                  {/* Preview Title Bar */}
+                  <div className="px-4 py-2 bg-void border-b border-glass-border flex items-center justify-between shrink-0">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2.5 h-2.5 rounded-full bg-status-error/80" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-status-warning/80" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-status-success/80" />
+                      <span className="text-xs font-mono text-text-muted ml-2">{activeMissionName.toLowerCase().replace(/\s+/g, '-')}.orchx.app</span>
+                    </div>
+                    <span className="text-[10px] font-mono text-status-success uppercase bg-status-success/10 px-2 py-0.5 rounded">
+                      Live Sandbox Active
+                    </span>
+                  </div>
+
+                  {/* Rendered Live App Preview Output */}
+                  <div className="flex-1 p-6 overflow-y-auto bg-void flex flex-col items-center justify-center">
+                    {activeMissionTitle.toLowerCase().includes('calculator') ? (
+                      /* Live Calculator App UI */
+                      <div className="w-72 p-5 bg-surface border border-glass-border rounded-2xl shadow-2xl flex flex-col space-y-4">
+                        <div className="flex justify-between items-center text-xs text-text-muted font-mono">
+                          <span>Calculator App</span>
+                          <span className="text-accent-primary font-bold">OrchX v1.4</span>
+                        </div>
+                        <div className="bg-void p-4 rounded-xl border border-glass-border text-right font-mono text-2xl font-bold text-text-primary">
+                          2,540
+                        </div>
+                        <div className="grid grid-cols-4 gap-2">
+                          {['C', '±', '%', '÷', '7', '8', '9', '×', '4', '5', '6', '-', '1', '2', '3', '+', '0', '.', '='].map((btn, i) => (
+                            <button
+                              key={i}
+                              className={`p-3 rounded-lg text-xs font-bold transition-all ${
+                                btn === '=' ? 'col-span-2 bg-accent-primary text-white shadow-glow' :
+                                ['÷', '×', '-', '+'].includes(btn) ? 'bg-accent-primary/20 text-accent-primary' :
+                                'bg-surface-hover text-text-primary hover:bg-surface-active'
+                              }`}
+                            >
+                              {btn}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      /* Live Generic Built Project UI */
+                      <div className="w-full max-w-md p-6 bg-surface border border-glass-border rounded-2xl shadow-2xl flex flex-col space-y-5">
+                        <div className="flex items-center justify-between border-b border-glass-divider pb-3">
+                          <div className="flex items-center space-x-2">
+                            <Sparkles className="w-4 h-4 text-accent-primary" />
+                            <span className="text-sm font-bold text-text-primary">{activeMissionName}</span>
+                          </div>
+                          <span className="text-xs px-2 py-0.5 rounded bg-accent-primary/10 text-accent-primary font-mono">v1.0 Ready</span>
+                        </div>
+
+                        <div className="space-y-2">
+                          <span className="text-xs font-semibold text-text-muted uppercase tracking-wider block">Generated Features</span>
+                          <div className="space-y-1.5">
+                            <div className="p-2.5 bg-void border border-glass-border rounded-lg text-xs font-medium text-text-primary flex justify-between">
+                              <span>Authentication & RBAC</span>
+                              <span className="text-status-success font-mono">PASSED</span>
+                            </div>
+                            <div className="p-2.5 bg-void border border-glass-border rounded-lg text-xs font-medium text-text-primary flex justify-between">
+                              <span>Database Persistence</span>
+                              <span className="text-status-success font-mono">ACTIVE</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <button className="w-full py-2.5 bg-accent-primary hover:bg-accent-hover text-white font-semibold text-xs rounded-xl transition-all shadow-glow flex items-center justify-center space-x-2">
+                          <span>Launch Live App</span>
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Live Generation Console */}
+                  <div className="px-4 py-2.5 bg-void border-t border-glass-border font-mono text-[10px] text-text-muted flex justify-between items-center shrink-0">
+                    <span>Render Engine: WebPreview v2.1</span>
+                    <span className="text-status-success">100% Synced with Agent</span>
+                  </div>
+
+                </div>
+
+              </div>
+            </div>
+          )}
+
         </div>
 
       </div>

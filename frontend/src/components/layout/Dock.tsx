@@ -53,10 +53,9 @@ export function Dock() {
     : chatHistory
 
   const getFriendlyName = (id: string) => {
-    if (id === 'mission-control') return { title: 'Home', icon: MessageSquare, desc: 'Autonomous agent task execution, goal breakdown, and decision ledger' };
+    if (id === 'mission-control') return { title: 'Home', icon: MessageSquare, desc: 'Side-by-side autonomous agent execution and live project sandbox preview' };
     if (id === 'documents-studio') return { title: 'Projects', icon: Box, desc: 'Knowledge vault, specifications, architecture blueprints, and document editor' };
     if (id === 'runtime-observatory') return { title: 'Runtime', icon: Activity, desc: 'Live kernel telemetry, active worker pool, and circuit-breaker provider routing' };
-    if (id === 'preview-studio') return { title: 'Preview', icon: MonitorPlay, desc: 'Live web sandbox, dynamic component previews, and UI rendering' };
     if (id === 'command-center') return { title: 'Settings', icon: Settings, desc: 'Provider key management, SecretVault policies, and system configuration', route: '/settings-studio' };
     return null;
   }
