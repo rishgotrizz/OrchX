@@ -332,7 +332,7 @@ export default function MissionControlPage() {
                       <div className="w-2.5 h-2.5 rounded-full bg-status-error/80" />
                       <div className="w-2.5 h-2.5 rounded-full bg-status-warning/80" />
                       <div className="w-2.5 h-2.5 rounded-full bg-status-success/80" />
-                      <span className="text-xs font-mono text-text-muted ml-2">{activeMissionName.toLowerCase().replace(/\s+/g, '-')}.orchx.app</span>
+                      <span className="text-xs font-mono text-text-muted ml-2">{activeMissionTitle.toLowerCase().replace(/\s+/g, '-')}.orchx.app</span>
                     </div>
                     <span className="text-[10px] font-mono text-status-success uppercase bg-status-success/10 px-2 py-0.5 rounded">
                       Live Sandbox Active
@@ -372,7 +372,7 @@ export default function MissionControlPage() {
                         <div className="flex items-center justify-between border-b border-glass-divider pb-3">
                           <div className="flex items-center space-x-2">
                             <Sparkles className="w-4 h-4 text-accent-primary" />
-                            <span className="text-sm font-bold text-text-primary">{activeMissionName}</span>
+                            <span className="text-sm font-bold text-text-primary">{activeMissionTitle}</span>
                           </div>
                           <span className="text-xs px-2 py-0.5 rounded bg-accent-primary/10 text-accent-primary font-mono">v1.0 Ready</span>
                         </div>
