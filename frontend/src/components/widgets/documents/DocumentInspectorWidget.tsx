@@ -3,22 +3,8 @@
 import React, { useRef, useImperativeHandle, forwardRef } from "react";
 import { Panel, PanelRef } from "@/components/layout/Panel";
 import { useDocumentsContext } from "@/contexts/DocumentsContext";
-import { Sparkles, CheckCircle2, AlertTriangle, FileText, ArrowRight } from "lucide-react";
-
-const ProgressBar = ({ label, percentage }: { label: string, percentage: number }) => (
-  <div className="flex flex-col space-y-1">
-    <div className="flex justify-between text-xs">
-      <span className="text-text-secondary">{label}</span>
-      <span className="text-text-primary font-medium">{percentage}%</span>
-    </div>
-    <div className="h-1.5 w-full bg-surface-hover rounded-full overflow-hidden">
-      <div 
-        className="h-full bg-accent-primary rounded-full transition-all duration-500 ease-out" 
-        style={{ width: `${percentage}%` }}
-      />
-    </div>
-  </div>
-);
+import { Sparkles, CheckCircle2, FileText, ArrowRight, Tag, User, Calendar, Workflow } from "lucide-react";
+import Link from "next/link";
 
 export const DocumentInspectorWidget = forwardRef((props, ref) => {
   const panelRef = useRef<PanelRef>(null);
@@ -29,76 +15,78 @@ export const DocumentInspectorWidget = forwardRef((props, ref) => {
     initialize: () => {}, mount: () => {}, refresh: () => {}, sleep: () => {}, resume: () => {}, destroy: () => {}, onVisibilityChange: () => {}, onPermissionChange: () => {},
   }));
 
-  if (!doc) return <Panel id="doc-inspector" header="AI Intelligence" className="h-full border-none !bg-transparent"><div className="p-4 text-xs text-text-muted">No document selected</div></Panel>;
+  if (!doc) return <Panel id="doc-inspector" header="Document Metadata" className="h-full border-none !bg-transparent"><div className="p-4 text-xs text-text-muted">No document selected</div></Panel>;
+
+  const snippetText = doc.content 
+    ? doc.content.replace(/^#\s+.*$/m, '').trim().slice(0, 180) + '...' 
+    : 'No content specified.';
 
   return (
-    <Panel id="doc-inspector" ref={panelRef} header="AI Intelligence" className="h-full border-none !bg-transparent">
-      <div className="flex flex-col h-full overflow-y-auto px-4 py-2 space-y-8 pb-12">
+    <Panel id="doc-inspector" ref={panelRef} header="Document Metadata" className="h-full border-none !bg-transparent">
+      <div className="flex flex-col h-full overflow-y-auto px-4 py-2 space-y-6 pb-12">
         
-        {/* Executive Summary */}
+        {/* Document Overview */}
         <section className="space-y-2">
           <h3 className="text-xs font-semibold text-text-primary uppercase tracking-wider flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-accent-primary" />
-            Executive Summary
+            Document Overview
           </h3>
-          <p className="text-sm text-text-secondary leading-relaxed">
-            The CRM SaaS is a scalable platform designed to unify customer interactions. The MVP focuses on contact management, deal tracking, and basic reporting, with AI-driven insights planned for Phase 2.
+          <p className="text-xs text-text-secondary leading-relaxed bg-surface/50 p-3 rounded-lg border border-glass-border">
+            {snippetText}
           </p>
         </section>
 
-        {/* Project Health */}
-        <section className="space-y-4">
-          <h3 className="text-xs font-semibold text-text-primary uppercase tracking-wider">Project Health</h3>
-          <div className="space-y-3">
-            <ProgressBar label="Requirements" percentage={90} />
-            <ProgressBar label="Architecture" percentage={75} />
-            <ProgressBar label="Database" percentage={82} />
-            <ProgressBar label="Testing" percentage={45} />
+        {/* Document Details */}
+        <section className="space-y-3">
+          <h3 className="text-xs font-semibold text-text-primary uppercase tracking-wider">Metadata Details</h3>
+          <div className="space-y-2 text-xs">
+            <div className="flex justify-between items-center p-2 bg-void/50 rounded-lg border border-glass-border">
+              <span className="text-text-muted flex items-center gap-1.5"><FileText className="w-3.5 h-3.5" /> Type:</span>
+              <span className="font-mono text-text-primary uppercase">{doc.type || 'specification'}</span>
+            </div>
+            <div className="flex justify-between items-center p-2 bg-void/50 rounded-lg border border-glass-border">
+              <span className="text-text-muted flex items-center gap-1.5"><User className="w-3.5 h-3.5" /> Author:</span>
+              <span className="font-mono text-text-primary">{doc.author || 'User'}</span>
+            </div>
+            <div className="flex justify-between items-center p-2 bg-void/50 rounded-lg border border-glass-border">
+              <span className="text-text-muted flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" /> Created:</span>
+              <span className="font-mono text-text-primary">{doc.createdAt ? new Date(doc.createdAt).toLocaleDateString() : 'Today'}</span>
+            </div>
           </div>
         </section>
 
-        {/* Missing Requirements */}
-        <section className="space-y-2">
-          <h3 className="text-xs font-semibold text-status-warning uppercase tracking-wider flex items-center gap-1.5">
-            <AlertTriangle className="w-3.5 h-3.5" />
-            Missing Requirements
-          </h3>
-          <div className="flex flex-col space-y-1">
-            <div className="text-sm text-text-secondary flex items-center gap-2"><div className="w-1 h-1 rounded-full bg-status-warning" /> Missing 3 User Stories for Analytics</div>
-            <div className="text-sm text-text-secondary flex items-center gap-2"><div className="w-1 h-1 rounded-full bg-status-warning" /> Stripe Webhook API undefined</div>
-            <div className="text-sm text-text-secondary flex items-center gap-2"><div className="w-1 h-1 rounded-full bg-status-warning" /> Team Roles schema missing</div>
-          </div>
-        </section>
-
-        {/* Next Steps */}
+        {/* Workflow Action */}
         <section className="space-y-2">
           <h3 className="text-xs font-semibold text-status-success uppercase tracking-wider flex items-center gap-1.5">
             <CheckCircle2 className="w-3.5 h-3.5" />
-            Recommended Next Steps
+            Workflow Integration
           </h3>
           <div className="flex flex-col space-y-2">
-            <button className="flex items-center justify-between text-left px-3 py-2 bg-surface-hover rounded-md text-sm text-text-primary hover:bg-surface-active transition-colors">
-              <span>Approve Requirements</span>
-              <ArrowRight className="w-3.5 h-3.5 text-text-muted" />
-            </button>
-            <button className="flex items-center justify-between text-left px-3 py-2 bg-surface-hover rounded-md text-sm text-text-primary hover:bg-surface-active transition-colors">
-              <span>Generate API Specification</span>
-              <ArrowRight className="w-3.5 h-3.5 text-text-muted" />
-            </button>
+            <Link 
+              href={`/workflow-forge?mission=${encodeURIComponent(doc.title)}`}
+              className="flex items-center justify-between text-left px-3 py-2 bg-accent-primary/10 border border-accent-primary/30 rounded-lg text-xs font-medium text-accent-primary hover:bg-accent-primary/20 transition-colors"
+            >
+              <span className="flex items-center gap-1.5"><Workflow className="w-3.5 h-3.5" /> Execute Workflow for {doc.title}</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
         </section>
 
-        {/* Project Context */}
-        <section className="space-y-2">
-          <h3 className="text-xs font-semibold text-text-primary uppercase tracking-wider">Project Context</h3>
-          <div className="flex flex-wrap gap-1.5">
-            {['Next.js', 'PostgreSQL', 'Stripe', 'B2B SaaS', 'Multi-tenant'].map(tag => (
-              <span key={tag} className="px-2 py-1 bg-surface border border-glass-border rounded-full text-xs text-text-secondary">
-                {tag}
-              </span>
-            ))}
-          </div>
-        </section>
+        {/* Document Tags */}
+        {doc.tags && doc.tags.length > 0 && (
+          <section className="space-y-2">
+            <h3 className="text-xs font-semibold text-text-primary uppercase tracking-wider flex items-center gap-1.5">
+              <Tag className="w-3.5 h-3.5 text-text-muted" /> Tags
+            </h3>
+            <div className="flex flex-wrap gap-1.5">
+              {doc.tags.map(tag => (
+                <span key={tag} className="px-2 py-0.5 bg-surface border border-glass-border rounded-full text-[11px] text-text-secondary font-mono">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </section>
+        )}
 
       </div>
     </Panel>
