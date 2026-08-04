@@ -5,10 +5,52 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion } from "framer-motion"
 import { WORKSPACE_REGISTRY } from "@/lib/workspace-registry"
-import { Plus, Search, MessageSquare, Box, Settings, Activity, MonitorPlay, Info } from "lucide-react"
+import { Plus, Search, MessageSquare, Box, Settings, Activity, MonitorPlay, Info, X } from "lucide-react"
+
+export interface ChatHistoryItem {
+  id: string;
+  title: string;
+  createdAt: string;
+}
 
 export function Dock() {
   const pathname = usePathname()
+  const [chatHistory, setChatHistory] = React.useState<ChatHistoryItem[]>([])
+  const [searchQuery, setSearchQuery] = React.useState("")
+
+  const loadChatHistory = React.useCallback(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const items = JSON.parse(localStorage.getItem('orchx_chat_history') || '[]')
+        setChatHistory(items)
+      } catch (e) {
+        setChatHistory([])
+      }
+    }
+  }, [])
+
+  React.useEffect(() => {
+    loadChatHistory()
+    if (typeof window !== 'undefined') {
+      window.addEventListener('orchx_chat_updated', loadChatHistory)
+      return () => window.removeEventListener('orchx_chat_updated', loadChatHistory)
+    }
+  }, [loadChatHistory])
+
+  const handleDeleteChat = (id: string, e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const updated = chatHistory.filter(c => c.id !== id)
+    setChatHistory(updated)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('orchx_chat_history', JSON.stringify(updated))
+      window.dispatchEvent(new Event('orchx_chat_updated'))
+    }
+  }
+
+  const filteredChats = searchQuery.trim() 
+    ? chatHistory.filter(c => c.title.toLowerCase().includes(searchQuery.toLowerCase()))
+    : chatHistory
 
   const getFriendlyName = (id: string) => {
     if (id === 'mission-control') return { title: 'Home', icon: MessageSquare, desc: 'Autonomous agent task execution, goal breakdown, and decision ledger' };
@@ -51,12 +93,49 @@ export function Dock() {
         </Link>
         <div className="relative">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
-          <input type="text" placeholder="Search..." className="w-full bg-void border border-glass-border rounded-md pl-9 pr-3 py-1.5 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent-primary" />
+          <input 
+            type="text" 
+            placeholder="Search chats..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-void border border-glass-border rounded-md pl-9 pr-3 py-1.5 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent-primary" 
+          />
         </div>
       </div>
 
-      {/* Navigation Space */}
-      <div className="flex-1 overflow-y-auto p-3" />
+      {/* Navigation Space / Recent Chat History */}
+      <div className="flex-1 overflow-y-auto px-3 py-2 space-y-3">
+        {filteredChats.length > 0 && (
+          <div className="space-y-1">
+            <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wider px-2 block mb-1">
+              Recent Chats
+            </span>
+            {filteredChats.map((chat) => (
+              <div
+                key={chat.id}
+                className="group flex items-center justify-between px-2.5 py-1.5 rounded-md hover:bg-surface-hover text-xs text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
+              >
+                <Link
+                  href={`/mission-control?chat=${chat.id}&mission=${encodeURIComponent(chat.title)}`}
+                  className="flex items-center space-x-2 overflow-hidden flex-1 min-w-0"
+                >
+                  <MessageSquare className="w-3.5 h-3.5 opacity-60 shrink-0 text-accent-primary" />
+                  <span className="truncate">{chat.title}</span>
+                </Link>
+                
+                <button
+                  type="button"
+                  onClick={(e) => handleDeleteChat(chat.id, e)}
+                  className="p-1 text-text-muted hover:text-status-error opacity-0 group-hover:opacity-100 transition-opacity rounded"
+                  title="Delete Chat"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Primary Workspaces */}
       <div className="p-3 border-t border-glass-divider space-y-0.5">

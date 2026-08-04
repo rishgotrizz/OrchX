@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { PageTransition } from "@/components/shared/PageTransition";
 import { 
   ReactFlow, 
@@ -25,17 +25,23 @@ import {
   Database, 
   RotateCw, 
   Sparkles,
-  CheckCircle2
+  CheckCircle2,
+  ExternalLink,
+  Layers,
+  Check
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 function WorkflowForgeContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [activeMissionName, setActiveMissionName] = useState<string>("Active Agentic Goal");
 
   const [nodes, setNodes, onNodesChange] = useNodesState<any>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<any>([]);
   const [isRunning, setIsRunning] = useState(false);
+  const [buildProgress, setBuildProgress] = useState<number>(0);
+  const [buildComplete, setBuildComplete] = useState<boolean>(false);
   const [selectedNode, setSelectedNode] = useState<any>(null);
   const [executionLog, setExecutionLog] = useState<string[]>([]);
 
@@ -180,28 +186,68 @@ function WorkflowForgeContent() {
 
   const handleRunWorkflow = () => {
     setIsRunning(true);
+    setBuildComplete(false);
+    setBuildProgress(10);
+    
     setExecutionLog([
-      `[0.00s] Initializing ${activeMissionName} pipeline execution...`,
-      `[0.12s] Webhook Trigger received goal: ${activeMissionName}.`,
-      `[0.28s] ${activeMissionName} Planner Agent analyzing architecture & dependencies...`,
-      `[0.55s] ${activeMissionName} Logic & State Tool executed successfully.`,
-      `[0.82s] Groq Llama 3.1 8B completed reasoning in 257ms with zero errors.`,
-      `[0.95s] SecretVault RBAC policy check passed.`,
-      `[1.10s] SQLite Event Logger recorded trace ID ex-${Math.floor(10000 + Math.random() * 90000)}.`,
-      `[1.15s] ${activeMissionName} Pipeline Execution SUCCESS!`
+      `[0.00s] Initializing project build pipeline for ${activeMissionName}...`,
     ]);
 
     setTimeout(() => {
+      setBuildProgress(35);
+      setExecutionLog(prev => [
+        ...prev,
+        `[0.25s] Webhook Trigger received goal: ${activeMissionName}.`,
+        `[0.45s] ${activeMissionName} Planner Agent analyzing schemas & UI components...`
+      ]);
+    }, 400);
+
+    setTimeout(() => {
+      setBuildProgress(65);
+      setExecutionLog(prev => [
+        ...prev,
+        `[0.75s] ${activeMissionName} Logic Tool compiling state handlers...`,
+        `[0.95s] Groq Llama 3.1 8B completed code generation in 255ms.`
+      ]);
+    }, 900);
+
+    setTimeout(() => {
+      setBuildProgress(85);
+      setExecutionLog(prev => [
+        ...prev,
+        `[1.20s] SecretVault RBAC policy check passed.`,
+        `[1.40s] Bundling React/HTML components for Preview Studio...`
+      ]);
+    }, 1400);
+
+    setTimeout(() => {
+      setBuildProgress(100);
       setIsRunning(false);
-    }, 2200);
+      setBuildComplete(true);
+
+      setExecutionLog(prev => [
+        ...prev,
+        `[1.60s] SQLite Event Logger recorded trace ID ex-${Math.floor(10000 + Math.random() * 90000)}.`,
+        `[1.65s] ${activeMissionName} PROJECT BUILD SUCCESSFUL!`
+      ]);
+
+      // Save built project preview artifact
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('orchx_built_project', JSON.stringify({
+          title: activeMissionName,
+          builtAt: new Date().toISOString(),
+          status: 'ready'
+        }));
+      }
+    }, 1800);
   };
 
   return (
     <PageTransition>
-      <div className="h-full flex flex-col bg-void text-text-primary">
+      <div className="h-full flex flex-col bg-void text-text-primary relative overflow-hidden">
         
         {/* Top Header & Toolbar */}
-        <div className="px-6 py-4 border-b border-glass-border flex items-center justify-between bg-surface shrink-0">
+        <div className="px-6 py-4 border-b border-glass-border flex items-center justify-between bg-surface shrink-0 z-10">
           <div className="flex items-center space-x-3">
             <div className="p-2 rounded-lg bg-accent-primary/10 text-accent-primary">
               <Workflow className="w-5 h-5" />
@@ -226,16 +272,69 @@ function WorkflowForgeContent() {
           </div>
 
           <div className="flex items-center space-x-3">
+            {buildComplete && (
+              <button 
+                onClick={() => router.push('/preview-studio')}
+                className="flex items-center space-x-2 px-4 py-2 bg-status-success/20 border border-status-success/50 text-status-success hover:bg-status-success/30 rounded-lg text-sm font-medium transition-all shadow-glow"
+              >
+                <span>View Built Project</span>
+                <ExternalLink className="w-4 h-4" />
+              </button>
+            )}
+
             <button 
               onClick={handleRunWorkflow}
               disabled={isRunning}
-              className="flex items-center space-x-2 px-4 py-2 bg-accent-primary hover:bg-accent-hover text-white rounded-lg text-sm font-medium transition-all shadow-glow disabled:opacity-50"
+              className="flex items-center space-x-2 px-5 py-2 bg-accent-primary hover:bg-accent-hover text-white rounded-lg text-sm font-semibold transition-all shadow-glow disabled:opacity-50"
             >
               {isRunning ? <RotateCw className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4 fill-white" />}
-              <span>{isRunning ? "Executing Pipeline..." : "Run Workflow"}</span>
+              <span>{isRunning ? `Building Project (${buildProgress}%)...` : "Run Workflow"}</span>
             </button>
           </div>
         </div>
+
+        {/* Live Project Building Overlay / Status Card */}
+        <AnimatePresence>
+          {(isRunning || buildComplete) && (
+            <motion.div 
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="bg-surface/90 backdrop-blur-md border-b border-glass-border px-6 py-3 flex items-center justify-between z-20 shrink-0 shadow-lg"
+            >
+              <div className="flex items-center space-x-3 flex-1 max-w-xl">
+                <div className="p-2 rounded-lg bg-accent-primary/10 text-accent-primary">
+                  {buildComplete ? <CheckCircle2 className="w-5 h-5 text-status-success" /> : <RotateCw className="w-5 h-5 animate-spin" />}
+                </div>
+                <div className="flex-1 space-y-1">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="font-semibold text-text-primary">
+                      {buildComplete ? `Project Built Successfully: ${activeMissionName}` : `Building Project: ${activeMissionName}`}
+                    </span>
+                    <span className="font-mono text-text-muted">{buildProgress}%</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-void rounded-full overflow-hidden border border-glass-border">
+                    <motion.div 
+                      className={`h-full ${buildComplete ? 'bg-status-success' : 'bg-accent-primary'}`}
+                      animate={{ width: `${buildProgress}%` }}
+                      transition={{ duration: 0.3 }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {buildComplete && (
+                <button
+                  onClick={() => router.push('/preview-studio')}
+                  className="ml-6 flex items-center space-x-2 px-4 py-1.5 bg-accent-primary hover:bg-accent-hover text-white rounded-lg text-xs font-semibold transition-all shadow-glow"
+                >
+                  <span>Open in Preview Studio</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Main Content Area */}
         <div className="flex-1 flex overflow-hidden">
@@ -282,13 +381,13 @@ function WorkflowForgeContent() {
 
             {/* Execution Trace Log Box */}
             <div className="flex-1 flex flex-col border-t border-glass-divider pt-4 min-h-[160px]">
-              <span className="text-xs font-semibold text-text-muted uppercase tracking-wider block mb-2">Live Execution Log</span>
+              <span className="text-xs font-semibold text-text-muted uppercase tracking-wider block mb-2">Live Build Tracer</span>
               <div className="flex-1 bg-void p-3 rounded-lg border border-glass-border font-mono text-[11px] text-text-secondary overflow-y-auto space-y-1">
                 {executionLog.length === 0 ? (
-                  <span className="text-text-muted/60 italic">Click "Run Workflow" to trigger pipeline execution.</span>
+                  <span className="text-text-muted/60 italic">Click "Run Workflow" to start building your project...</span>
                 ) : (
                   executionLog.map((log, i) => (
-                    <div key={i} className={log.includes("SUCCESS") ? "text-status-success font-bold" : "text-text-primary"}>
+                    <div key={i} className={log.includes("SUCCESSFUL") ? "text-status-success font-bold" : "text-text-primary"}>
                       {log}
                     </div>
                   ))

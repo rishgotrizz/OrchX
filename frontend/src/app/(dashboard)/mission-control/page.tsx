@@ -39,6 +39,12 @@ export default function MissionControlPage() {
     setTimeout(() => {
       if (typeof window !== 'undefined') {
         localStorage.setItem('orchx_active_mission', titleSubject);
+
+        const existingHistory = JSON.parse(localStorage.getItem('orchx_chat_history') || '[]');
+        const newHistoryItem = { id: `chat-${Date.now()}`, title: titleSubject, createdAt: new Date().toISOString() };
+        const updatedHistory = [newHistoryItem, ...existingHistory.filter((item: any) => item.title !== titleSubject)];
+        localStorage.setItem('orchx_chat_history', JSON.stringify(updatedHistory));
+        window.dispatchEvent(new Event('orchx_chat_updated'));
       }
 
       setMessages(prev => [
