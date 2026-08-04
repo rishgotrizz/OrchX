@@ -348,7 +348,7 @@ export default function MissionControlPage() {
                     </div>
                   </div>
 
-                  {/* Rendered Live App Preview Output */}
+                  {/* Rendered Live App Preview Output (Dynamic per Goal) */}
                   <div className="flex-1 p-6 overflow-y-auto bg-void flex flex-col items-center justify-center">
                     {!activeMissionTitle ? (
                       /* Clean Empty State when no active mission */
@@ -362,31 +362,6 @@ export default function MissionControlPage() {
                         >
                           Close Preview
                         </button>
-                      </div>
-                    ) : activeMissionTitle.toLowerCase().includes('calculator') ? (
-                      /* Live Calculator App UI */
-                      <div className="w-72 p-5 bg-surface border border-glass-border rounded-2xl shadow-2xl flex flex-col space-y-4">
-                        <div className="flex justify-between items-center text-xs text-text-muted font-mono">
-                          <span>Calculator App</span>
-                          <span className="text-accent-primary font-bold">OrchX v1.4</span>
-                        </div>
-                        <div className="bg-void p-4 rounded-xl border border-glass-border text-right font-mono text-2xl font-bold text-text-primary">
-                          2,540
-                        </div>
-                        <div className="grid grid-cols-4 gap-2">
-                          {['C', '±', '%', '÷', '7', '8', '9', '×', '4', '5', '6', '-', '1', '2', '3', '+', '0', '.', '='].map((btn, i) => (
-                            <button
-                              key={i}
-                              className={`p-3 rounded-lg text-xs font-bold transition-all ${
-                                btn === '=' ? 'col-span-2 bg-accent-primary text-white shadow-glow' :
-                                ['÷', '×', '-', '+'].includes(btn) ? 'bg-accent-primary/20 text-accent-primary' :
-                                'bg-surface-hover text-text-primary hover:bg-surface-active'
-                              }`}
-                            >
-                              {btn}
-                            </button>
-                          ))}
-                        </div>
                       </div>
                     ) : (
                       /* Clean Dynamic Project Output (Zero Fake Hardcoded Rows!) */
