@@ -196,17 +196,6 @@ export default function MissionControlPage() {
                     <h1 className="text-2xl font-bold tracking-tight text-text-primary">What would you like to build today?</h1>
                     <p className="text-xs text-text-muted">Type any project goal to start agent execution and open live preview generation.</p>
                   </div>
-                  
-                  <div className="grid grid-cols-2 gap-3 w-full">
-                    <button onClick={() => handleSubmit(undefined, "Build a Calculator App")} className="text-left p-3.5 bg-surface border border-glass-border rounded-xl hover:bg-surface-hover transition-colors flex flex-col space-y-1">
-                      <span className="text-xs font-bold text-text-primary">Build Calculator App</span>
-                      <span className="text-[11px] text-text-muted">Interactive arithmetic calculator layout</span>
-                    </button>
-                    <button onClick={() => handleSubmit(undefined, "Build CRM Platform")} className="text-left p-3.5 bg-surface border border-glass-border rounded-xl hover:bg-surface-hover transition-colors flex flex-col space-y-1">
-                      <span className="text-xs font-bold text-text-primary">Build CRM Platform</span>
-                      <span className="text-[11px] text-text-muted">Customer & deal management system</span>
-                    </button>
-                  </div>
                 </div>
               ) : (
                 /* Active Thread */
