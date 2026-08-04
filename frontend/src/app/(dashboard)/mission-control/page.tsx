@@ -20,7 +20,9 @@ import {
   Sparkles, 
   ExternalLink,
   RotateCw,
-  Code
+  Code,
+  X,
+  Workflow
 } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -29,9 +31,11 @@ export default function MissionControlPage() {
   const [prompt, setPrompt] = useState("");
   const [isChatting, setIsChatting] = useState(false);
   const [messages, setMessages] = useState<any[]>([]);
-  const [showPreview, setShowPreview] = useState(true);
+  
+  // Closed by default when no tasks are running!
+  const [showPreview, setShowPreview] = useState(false);
   const [deviceProfile, setDeviceProfile] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
-  const [activeMissionTitle, setActiveMissionTitle] = useState<string>("Active Project");
+  const [activeMissionTitle, setActiveMissionTitle] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const handleSubmit = (e?: React.FormEvent, customPrompt?: string) => {
@@ -54,6 +58,7 @@ export default function MissionControlPage() {
       : textToSubmit.trim();
 
     setActiveMissionTitle(titleSubject);
+    setShowPreview(true); // Open live preview when task is run!
 
     // Save active mission & history
     if (typeof window !== 'undefined') {
@@ -145,7 +150,7 @@ export default function MissionControlPage() {
               </button>
             </div>
 
-            {/* Device Profile Switcher (Only visible when preview active) */}
+            {/* Device Profile Switcher */}
             {showPreview && (
               <div className="flex items-center space-x-1 bg-void p-1 rounded-lg border border-glass-border">
                 <button
@@ -189,7 +194,7 @@ export default function MissionControlPage() {
                   </div>
                   <div className="space-y-2">
                     <h1 className="text-2xl font-bold tracking-tight text-text-primary">What would you like to build today?</h1>
-                    <p className="text-xs text-text-muted">Type any project goal to start side-by-side agent execution and live preview generation.</p>
+                    <p className="text-xs text-text-muted">Type any project goal to start agent execution and open live preview generation.</p>
                   </div>
                   
                   <div className="grid grid-cols-2 gap-3 w-full">
@@ -269,8 +274,9 @@ export default function MissionControlPage() {
                               </div>
 
                               <div className="border-t border-glass-divider pt-2.5 flex items-center space-x-2">
-                                <Link href={`/workflow-forge?mission=${encodeURIComponent(msg.missionName || 'Active Mission')}`} className="flex-1 text-center py-1.5 bg-accent-primary text-white hover:bg-accent-hover rounded-md text-xs font-medium transition-colors">
-                                  Execute Mission
+                                <Link href={`/workflow-forge?mission=${encodeURIComponent(msg.missionName || 'Active Mission')}`} className="flex-1 text-center py-1.5 bg-accent-primary text-white hover:bg-accent-hover rounded-md text-xs font-medium transition-colors flex items-center justify-center space-x-1">
+                                  <Workflow className="w-3.5 h-3.5" />
+                                  <span>Run Workflow</span>
                                 </Link>
                               </div>
                             </div>
@@ -320,28 +326,55 @@ export default function MissionControlPage() {
 
           </div>
 
-          {/* Right Panel: Side-by-Side Live Preview Sandbox */}
+          {/* Right Panel: Side-by-Side Live Preview Sandbox (Only visible when user runs tasks!) */}
           {showPreview && (
             <div className="w-1/2 flex flex-col h-full bg-void-elevated p-4 overflow-hidden items-center justify-center relative">
               <div className={frameWidths[deviceProfile]}>
                 
                 <div className="w-full h-full bg-surface border border-glass-border rounded-xl flex flex-col overflow-hidden shadow-2xl">
-                  {/* Preview Title Bar */}
+                  
+                  {/* Preview Title Bar with Close X Button */}
                   <div className="px-4 py-2 bg-void border-b border-glass-border flex items-center justify-between shrink-0">
                     <div className="flex items-center space-x-2">
                       <div className="w-2.5 h-2.5 rounded-full bg-status-error/80" />
                       <div className="w-2.5 h-2.5 rounded-full bg-status-warning/80" />
                       <div className="w-2.5 h-2.5 rounded-full bg-status-success/80" />
-                      <span className="text-xs font-mono text-text-muted ml-2">{activeMissionTitle.toLowerCase().replace(/\s+/g, '-')}.orchx.app</span>
+                      <span className="text-xs font-mono text-text-muted ml-2">
+                        {activeMissionTitle ? `${activeMissionTitle.toLowerCase().replace(/\s+/g, '-')}.orchx.app` : 'sandbox.orchx.app'}
+                      </span>
                     </div>
-                    <span className="text-[10px] font-mono text-status-success uppercase bg-status-success/10 px-2 py-0.5 rounded">
-                      Live Sandbox Active
-                    </span>
+
+                    <div className="flex items-center space-x-2">
+                      <span className="text-[10px] font-mono text-status-success uppercase bg-status-success/10 px-2 py-0.5 rounded">
+                        Live Sandbox Active
+                      </span>
+                      {/* Close X Button */}
+                      <button
+                        onClick={() => setShowPreview(false)}
+                        className="p-1 text-text-muted hover:text-status-error transition-colors rounded hover:bg-surface-hover"
+                        title="Close Live Preview"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
 
                   {/* Rendered Live App Preview Output */}
                   <div className="flex-1 p-6 overflow-y-auto bg-void flex flex-col items-center justify-center">
-                    {activeMissionTitle.toLowerCase().includes('calculator') ? (
+                    {!activeMissionTitle ? (
+                      /* Clean Empty State when no active mission */
+                      <div className="flex flex-col items-center justify-center text-center space-y-3 p-6 text-text-muted">
+                        <MonitorPlay className="w-8 h-8 text-accent-primary" />
+                        <span className="text-sm font-semibold text-text-primary">No Active Product Running</span>
+                        <span className="text-xs max-w-xs text-text-secondary">Run a project task from Mission Control to start rendering the live sandbox preview.</span>
+                        <button
+                          onClick={() => setShowPreview(false)}
+                          className="mt-2 px-3 py-1.5 bg-surface border border-glass-border text-text-primary rounded-lg text-xs font-medium hover:bg-surface-hover transition-colors"
+                        >
+                          Close Preview
+                        </button>
+                      </div>
+                    ) : activeMissionTitle.toLowerCase().includes('calculator') ? (
                       /* Live Calculator App UI */
                       <div className="w-72 p-5 bg-surface border border-glass-border rounded-2xl shadow-2xl flex flex-col space-y-4">
                         <div className="flex justify-between items-center text-xs text-text-muted font-mono">
@@ -367,34 +400,32 @@ export default function MissionControlPage() {
                         </div>
                       </div>
                     ) : (
-                      /* Live Generic Built Project UI */
+                      /* Clean Dynamic Project Output (Zero Fake Hardcoded Rows!) */
                       <div className="w-full max-w-md p-6 bg-surface border border-glass-border rounded-2xl shadow-2xl flex flex-col space-y-5">
                         <div className="flex items-center justify-between border-b border-glass-divider pb-3">
                           <div className="flex items-center space-x-2">
                             <Sparkles className="w-4 h-4 text-accent-primary" />
                             <span className="text-sm font-bold text-text-primary">{activeMissionTitle}</span>
                           </div>
-                          <span className="text-xs px-2 py-0.5 rounded bg-accent-primary/10 text-accent-primary font-mono">v1.0 Ready</span>
+                          <span className="text-xs px-2 py-0.5 rounded bg-status-success/10 text-status-success font-mono">Build Active</span>
                         </div>
 
-                        <div className="space-y-2">
-                          <span className="text-xs font-semibold text-text-muted uppercase tracking-wider block">Generated Features</span>
-                          <div className="space-y-1.5">
-                            <div className="p-2.5 bg-void border border-glass-border rounded-lg text-xs font-medium text-text-primary flex justify-between">
-                              <span>Authentication & RBAC</span>
-                              <span className="text-status-success font-mono">PASSED</span>
-                            </div>
-                            <div className="p-2.5 bg-void border border-glass-border rounded-lg text-xs font-medium text-text-primary flex justify-between">
-                              <span>Database Persistence</span>
-                              <span className="text-status-success font-mono">ACTIVE</span>
-                            </div>
-                          </div>
+                        <div className="p-4 bg-void border border-glass-border rounded-xl flex flex-col space-y-2">
+                          <span className="text-xs font-semibold text-text-primary flex items-center gap-1.5">
+                            <Workflow className="w-3.5 h-3.5 text-accent-primary" /> Live Agent Execution
+                          </span>
+                          <p className="text-xs text-text-muted">
+                            Autonomous action plan generated for <strong className="text-text-primary">{activeMissionTitle}</strong>. Run workflow to build and test code.
+                          </p>
                         </div>
 
-                        <button className="w-full py-2.5 bg-accent-primary hover:bg-accent-hover text-white font-semibold text-xs rounded-xl transition-all shadow-glow flex items-center justify-center space-x-2">
-                          <span>Launch Live App</span>
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </button>
+                        <Link
+                          href={`/workflow-forge?mission=${encodeURIComponent(activeMissionTitle)}`}
+                          className="w-full py-2.5 bg-accent-primary hover:bg-accent-hover text-white font-semibold text-xs rounded-xl transition-all shadow-glow flex items-center justify-center space-x-2"
+                        >
+                          <Workflow className="w-3.5 h-3.5" />
+                          <span>Run Project Workflow</span>
+                        </Link>
                       </div>
                     )}
                   </div>
@@ -402,7 +433,7 @@ export default function MissionControlPage() {
                   {/* Live Generation Console */}
                   <div className="px-4 py-2.5 bg-void border-t border-glass-border font-mono text-[10px] text-text-muted flex justify-between items-center shrink-0">
                     <span>Render Engine: WebPreview v2.1</span>
-                    <span className="text-status-success">100% Synced with Agent</span>
+                    <span className="text-status-success">Synced with Agent</span>
                   </div>
 
                 </div>
