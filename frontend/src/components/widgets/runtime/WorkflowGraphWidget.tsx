@@ -97,8 +97,13 @@ export const WorkflowGraphWidget = forwardRef((props, ref) => {
       <motion.div variants={fadeIn} initial="initial" animate="animate" exit="exit" className="w-full h-full min-h-[300px]">
         <ReactFlow nodes={nodes} edges={edges} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} fitView className="bg-void border border-glass-border rounded-lg">
           <Background color="var(--color-glass-divider)" gap={16} />
-          <Controls className="bg-surface border border-glass-border fill-text-primary" />
-          <MiniMap nodeColor="var(--color-surface-hover)" maskColor="rgba(0,0,0,0.5)" className="bg-void border border-glass-border" />
+          <Controls className="!bg-surface !border !border-glass-border !fill-text-primary !text-text-primary !shadow-2xl" />
+          <MiniMap 
+            nodeColor="#38bdf8" 
+            maskColor="rgba(0,0,0,0.8)" 
+            className="!bg-void !border !border-glass-border !rounded-lg"
+            style={{ width: 140, height: 90 }}
+          />
         </ReactFlow>
       </motion.div>
     </Panel>

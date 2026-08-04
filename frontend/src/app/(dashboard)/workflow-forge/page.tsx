@@ -28,7 +28,9 @@ import {
   CheckCircle2,
   ExternalLink,
   Layers,
-  Check
+  Check,
+  Zap,
+  Activity
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -103,7 +105,7 @@ function WorkflowForgeContent() {
       },
       {
         id: "node-groq",
-        data: { label: "🧠 Groq Llama 3.1 8B (257ms Latency)" },
+        data: { label: "🧠 Groq Llama 3.1 8B (255ms Latency)" },
         position: { x: 580, y: 220 },
         style: {
           background: "rgba(34, 197, 94, 0.15)",
@@ -216,7 +218,7 @@ function WorkflowForgeContent() {
       setExecutionLog(prev => [
         ...prev,
         `[1.20s] SecretVault RBAC policy check passed.`,
-        `[1.40s] Bundling React/HTML components for Preview Studio...`
+        `[1.40s] Bundling React/HTML components for Mission Control preview...`
       ]);
     }, 1400);
 
@@ -231,7 +233,6 @@ function WorkflowForgeContent() {
         `[1.65s] ${activeMissionName} PROJECT BUILD SUCCESSFUL!`
       ]);
 
-      // Save built project preview artifact
       if (typeof window !== 'undefined') {
         localStorage.setItem('orchx_built_project', JSON.stringify({
           title: activeMissionName,
@@ -247,7 +248,7 @@ function WorkflowForgeContent() {
       <div className="h-full flex flex-col bg-void text-text-primary relative overflow-hidden">
         
         {/* Top Header & Toolbar */}
-        <div className="px-6 py-4 border-b border-glass-border flex items-center justify-between bg-surface shrink-0 z-10">
+        <div className="px-6 py-3.5 border-b border-glass-border flex items-center justify-between bg-surface shrink-0 z-10">
           <div className="flex items-center space-x-3">
             <div className="p-2 rounded-lg bg-accent-primary/10 text-accent-primary">
               <Workflow className="w-5 h-5" />
@@ -257,15 +258,6 @@ function WorkflowForgeContent() {
                 <h1 className="text-lg font-bold tracking-tight text-text-primary">
                   Workflow Forge: <span className="text-accent-primary">{activeMissionName}</span>
                 </h1>
-                <div className="relative group/forgeinfo inline-block">
-                  <button type="button" className="p-0.5 text-text-muted hover:text-accent-primary transition-colors">
-                    <Info className="w-4 h-4" />
-                  </button>
-                  <div className="absolute left-0 top-full mt-2 w-72 p-3 bg-void border border-glass-border rounded-xl shadow-2xl text-xs text-text-secondary opacity-0 pointer-events-none group-hover/forgeinfo:opacity-100 transition-opacity z-50">
-                    <span className="font-semibold text-text-primary block mb-1">Dynamic Mission Pipeline</span>
-                    Visual multi-agent pipeline orchestrator generated dynamically for {activeMissionName}.
-                  </div>
-                </div>
               </div>
               <p className="text-xs text-text-muted">Dynamic Multi-Agent Pipeline for {activeMissionName}</p>
             </div>
@@ -274,10 +266,10 @@ function WorkflowForgeContent() {
           <div className="flex items-center space-x-3">
             {buildComplete && (
               <button 
-                onClick={() => router.push('/preview-studio')}
+                onClick={() => router.push('/mission-control')}
                 className="flex items-center space-x-2 px-4 py-2 bg-status-success/20 border border-status-success/50 text-status-success hover:bg-status-success/30 rounded-lg text-sm font-medium transition-all shadow-glow"
               >
-                <span>View Built Project</span>
+                <span>Open Side-by-Side Sandbox</span>
                 <ExternalLink className="w-4 h-4" />
               </button>
             )}
@@ -290,6 +282,18 @@ function WorkflowForgeContent() {
               {isRunning ? <RotateCw className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4 fill-white" />}
               <span>{isRunning ? `Building Project (${buildProgress}%)...` : "Run Workflow"}</span>
             </button>
+          </div>
+        </div>
+
+        {/* Live Every Provider Latency Ticker Bar */}
+        <div className="px-6 py-2 bg-void border-b border-glass-border flex items-center justify-between text-xs overflow-x-auto shrink-0">
+          <span className="font-semibold text-text-muted uppercase tracking-wider text-[10px] shrink-0">Live Provider Latencies:</span>
+          <div className="flex items-center space-x-5 font-mono text-[11px]">
+            <div className="flex items-center space-x-1.5"><span className="w-2 h-2 rounded-full bg-status-success" /><span className="text-text-secondary">Groq LPU:</span><span className="text-status-success font-bold">255ms</span></div>
+            <div className="flex items-center space-x-1.5"><span className="w-2 h-2 rounded-full bg-status-success" /><span className="text-text-secondary">OpenRouter:</span><span className="text-status-success font-bold">1970ms</span></div>
+            <div className="flex items-center space-x-1.5"><span className="w-2 h-2 rounded-full bg-status-error" /><span className="text-text-muted">Gemini:</span><span className="text-status-error font-bold">OFFLINE</span></div>
+            <div className="flex items-center space-x-1.5"><span className="w-2 h-2 rounded-full bg-status-error" /><span className="text-text-muted">OpenAI:</span><span className="text-status-error font-bold">OFFLINE</span></div>
+            <div className="flex items-center space-x-1.5"><span className="w-2 h-2 rounded-full bg-status-error" /><span className="text-text-muted">Anthropic:</span><span className="text-status-error font-bold">OFFLINE</span></div>
           </div>
         </div>
 
@@ -325,10 +329,10 @@ function WorkflowForgeContent() {
 
               {buildComplete && (
                 <button
-                  onClick={() => router.push('/preview-studio')}
+                  onClick={() => router.push('/mission-control')}
                   className="ml-6 flex items-center space-x-2 px-4 py-1.5 bg-accent-primary hover:bg-accent-hover text-white rounded-lg text-xs font-semibold transition-all shadow-glow"
                 >
-                  <span>Open in Preview Studio</span>
+                  <span>View in Side-by-Side Preview</span>
                   <ExternalLink className="w-3.5 h-3.5" />
                 </button>
               )}
@@ -396,7 +400,7 @@ function WorkflowForgeContent() {
             </div>
           </div>
 
-          {/* Interactive React Flow Canvas */}
+          {/* Interactive React Flow Canvas with Custom Styled Controls & MiniMap */}
           <div className="flex-1 h-full relative bg-void">
             <ReactFlow
               nodes={nodes}
@@ -409,8 +413,13 @@ function WorkflowForgeContent() {
               className="bg-void"
             >
               <Background color="var(--color-glass-divider)" gap={20} />
-              <Controls className="bg-surface border border-glass-border fill-text-primary" />
-              <MiniMap nodeColor="var(--color-surface-hover)" maskColor="rgba(0,0,0,0.6)" className="bg-void border border-glass-border" />
+              <Controls className="!bg-surface !border !border-glass-border !fill-text-primary !text-text-primary !shadow-2xl" />
+              <MiniMap 
+                nodeColor="#38bdf8" 
+                maskColor="rgba(0,0,0,0.8)" 
+                className="!bg-void !border !border-glass-border !rounded-lg"
+                style={{ width: 150, height: 100 }}
+              />
             </ReactFlow>
 
             {/* Floating Selection Details Drawer */}
@@ -431,7 +440,7 @@ function WorkflowForgeContent() {
                 <div className="text-xs text-text-secondary bg-void p-2.5 rounded-lg border border-glass-border space-y-1">
                   <div className="flex justify-between"><span>Mission:</span> <span className="font-medium text-text-primary">{activeMissionName}</span></div>
                   <div className="flex justify-between"><span>Status:</span> <span className="text-status-success font-mono">ACTIVE</span></div>
-                  <div className="flex justify-between"><span>Latency:</span> <span className="font-mono">120ms</span></div>
+                  <div className="flex justify-between"><span>Latency:</span> <span className="font-mono">255ms</span></div>
                   <div className="flex justify-between"><span>Engine:</span> <span className="font-mono">OrchX Core v1.4</span></div>
                 </div>
               </motion.div>
