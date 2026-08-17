@@ -16,7 +16,7 @@ The OrchX team takes security seriously. If you discover a potential security vu
 **Please do NOT open a public GitHub issue for security vulnerabilities.**
 
 Instead, report the issue via email or private security contact:
-- Email: security@orchx.dev (or contact repository owners privately)
+- Email: rishabh19t@gmail.com (or contact repository owners privately)
 
 ### What to include in your report:
 - A description of the vulnerability and potential impact.
