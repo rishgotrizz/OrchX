@@ -138,6 +138,29 @@ graph TD
 
 ---
 
+## 🧪 Verification & Testing
+
+OrchX includes a comprehensive verification suite designed to check domain logic, API security boundaries, and integration paths.
+
+### 1. Running Backend Unit & API Tests
+Run the entire suite of 166 backend tests (fully mocked, no internet or provider credentials required):
+```bash
+PYTHONPATH=packages/orchx-core:packages/orchx-runtime:packages/orchx-api pytest packages/orchx-runtime/tests/ packages/orchx-api/tests/
+```
+
+### 2. Optional Live Provider Integration Tests
+To verify real connection paths, authentication, and HTTP transport payloads against active external AI LPUs (e.g. Groq):
+```bash
+export ORCHX_RUN_LIVE_PROVIDER_TESTS=true
+export ORCHX_MASTER_KEY="your-base64-master-key"
+export ORCHX_TEST_GROQ_API_KEY="gsk_your_groq_api_key_here"
+
+PYTHONPATH=packages/orchx-core:packages/orchx-runtime:packages/orchx-api pytest packages/orchx-api/tests/test_real_integration.py
+```
+*Note: This test is skipped by default unless `ORCHX_RUN_LIVE_PROVIDER_TESTS=true` is explicitly set.*
+
+---
+
 ## 🌐 Deploying to Production (Vercel)
 
 OrchX is fully configured for zero-configuration Vercel deployment:
