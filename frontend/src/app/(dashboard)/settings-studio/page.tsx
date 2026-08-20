@@ -1,20 +1,13 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React from "react";
 import { DualPanelLayout } from "@/components/layout/templates/DualPanelLayout";
 import { WidgetRenderer } from "@/components/layout/WidgetRenderer";
-import { initializeSettingsWidgets, initializeSettingsMockData } from "@/components/widgets/settings";
 
-if (typeof window !== "undefined") {
-  initializeSettingsWidgets();
-  initializeSettingsMockData();
-}
+// Registry initialization is handled globally in providers.tsx.
+// No local initializeSettingsWidgets/initializeSettingsMockData call needed here.
 
 export default function SettingsStudioPage() {
-  const breadcrumbs = [
-    { label: "Settings Studio" }
-  ];
-
   const leftPanel = (
     <div className="flex flex-col h-full bg-void border-r border-glass-border">
       <div className="flex-1 overflow-y-auto">

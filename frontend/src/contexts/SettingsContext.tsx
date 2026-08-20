@@ -17,7 +17,7 @@ export interface SettingsState {
 // Safe default — used before the provider mounts (e.g. SSG or MSW init delay).
 // All real data is provided by SettingsProvider once it mounts.
 const DEFAULT_SESSION: SettingsSession = {
-  currentCategory: 'appearance',
+  currentCategory: 'providers',
   currentProfile: 'default',
   searchQuery: '',
   modifiedSettings: {}
@@ -38,7 +38,7 @@ const SettingsContext = createContext<SettingsState>(DEFAULT_CONTEXT);
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const [session, setSession] = useState<SettingsSession>({
-    currentCategory: 'appearance',
+    currentCategory: 'providers',
     currentProfile: 'default',
     searchQuery: '',
     modifiedSettings: {}
