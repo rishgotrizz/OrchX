@@ -20,6 +20,7 @@ export function ReactQueryProvider({ children }: { children: React.ReactNode }) 
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      console.log(`OrchX Booted. Commit: ${process.env.NEXT_PUBLIC_BUILD_COMMIT_SHA || "UNKNOWN"}`);
       if (process.env.NEXT_PUBLIC_ENABLE_MSW !== 'false') {
         import('@/lib/mocks/browser')
           .then(async ({ worker }) => {

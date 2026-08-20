@@ -63,6 +63,7 @@ export const SettingsDiagnosticsWidget = forwardRef((props, ref) => {
 
         <div className="flex flex-col space-y-1.5 text-xs font-mono bg-void p-3 rounded-lg border border-glass-border">
           <div className="flex justify-between text-text-primary"><span>Runtime Kernel</span><span className="text-accent-primary">v1.4.2</span></div>
+          <div className="flex justify-between text-text-primary"><span>Build Commit</span><span className="text-accent-primary">{process.env.NEXT_PUBLIC_BUILD_COMMIT_SHA || "UNKNOWN"}</span></div>
           <div className="flex justify-between text-text-primary"><span>SecretVault Lock</span><span className="text-status-success">AES-256-GCM</span></div>
           <div className="flex justify-between text-text-primary"><span>Storage Backend</span><span className="text-status-success font-semibold">SQLite + Vault</span></div>
         </div>

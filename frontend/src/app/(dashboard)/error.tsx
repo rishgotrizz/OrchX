@@ -33,6 +33,10 @@ export default function DashboardError({
               <span>DIAGNOSTIC_ID:</span>
               <span>{error.digest || Math.random().toString(36).substring(7).toUpperCase()}</span>
             </div>
+            <div className="flex justify-between items-center mb-1">
+              <span>BUILD_COMMIT:</span>
+              <span>{process.env.NEXT_PUBLIC_BUILD_COMMIT_SHA || "UNKNOWN"}</span>
+            </div>
             <div className="flex justify-between items-center">
               <span>TIMESTAMP:</span>
               <span>{new Date().toISOString()}</span>

@@ -73,6 +73,13 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
 export function useSettingsContext() {
   const context = useContext(SettingsContext);
-  if (!context) throw new Error('useSettingsContext must be used within a SettingsProvider');
+  if (!context) {
+    let traceInfo = "No React context value found.";
+    if (typeof window !== "undefined") {
+      const err = new Error();
+      traceInfo = `Path: ${window.location.pathname}\nStack: ${err.stack || "N/A"}`;
+    }
+    throw new Error(`useSettingsContext must be used within a SettingsProvider. Diagnostics:\n${traceInfo}`);
+  }
   return context;
 }
