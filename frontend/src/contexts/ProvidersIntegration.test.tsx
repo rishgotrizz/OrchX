@@ -1,6 +1,7 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeAll } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryProvider } from '@/app/providers';
 import DashboardLayout from '@/app/(dashboard)/layout';
 import MissionControlPage from '@/app/(dashboard)/mission-control/page';
@@ -33,13 +34,16 @@ describe('Providers Integration & Dashboard Layout Composition', () => {
     expect(screen.getByText('Initializing Runtime...')).toBeDefined();
   });
 
-  it('fails with settings context exception if Mission Control is rendered directly without ReactQueryProvider', () => {
-    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    
-    expect(() => render(<MissionControlPage />)).toThrow(
-      /useSettingsContext must be used within a SettingsProvider/
-    );
-    
-    consoleErrorSpy.mockRestore();
+  it('renders MissionControlPage safely with default context values even without SettingsProvider', () => {
+    // Context now has a safe default — no throw from useSettingsContext.
+    // MissionControlPage still needs QueryClientProvider for its own useQuery calls.
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    expect(() =>
+      render(
+        <QueryClientProvider client={qc}>
+          <MissionControlPage />
+        </QueryClientProvider>
+      )
+    ).not.toThrow();
   });
 });

@@ -25,15 +25,10 @@ describe('SettingsContext', () => {
     return <div data-testid="theme-val">{theme}</div>;
   }
 
-  it('throws error when rendered outside SettingsProvider', () => {
-    // Suppress console.error output for the intentional error throw
-    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    
-    expect(() => render(<TestConsumer />)).toThrow(
-      'useSettingsContext must be used within a SettingsProvider'
-    );
-    
-    consoleErrorSpy.mockRestore();
+  it('returns safe default values when rendered outside SettingsProvider', () => {
+    render(<TestConsumer />);
+    // Returns the registry default for 'appearance.theme' = 'dark'
+    expect(screen.getByTestId('theme-val').textContent).toBe('dark');
   });
 
   it('provides configuration state when rendered inside SettingsProvider', () => {

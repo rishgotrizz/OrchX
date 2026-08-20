@@ -14,7 +14,26 @@ export interface SettingsState {
   updateSettingValue: (configId: string, value: any, persist?: boolean) => void;
 }
 
-const SettingsContext = createContext<SettingsState | undefined>(undefined);
+// Safe default — used before the provider mounts (e.g. SSG or MSW init delay).
+// All real data is provided by SettingsProvider once it mounts.
+const DEFAULT_SESSION: SettingsSession = {
+  currentCategory: 'appearance',
+  currentProfile: 'default',
+  searchQuery: '',
+  modifiedSettings: {}
+};
+
+const DEFAULT_CONTEXT: SettingsState = {
+  session: DEFAULT_SESSION,
+  setSession: () => {},
+  getSettingValue: (configId: string) => {
+    const config = getAllConfigurations().find(c => c.id === configId);
+    return config?.defaultValue;
+  },
+  updateSettingValue: () => {},
+};
+
+const SettingsContext = createContext<SettingsState>(DEFAULT_CONTEXT);
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
@@ -71,15 +90,6 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useSettingsContext() {
-  const context = useContext(SettingsContext);
-  if (!context) {
-    let traceInfo = "No React context value found.";
-    if (typeof window !== "undefined") {
-      const err = new Error();
-      traceInfo = `Path: ${window.location.pathname}\nStack: ${err.stack || "N/A"}`;
-    }
-    throw new Error(`useSettingsContext must be used within a SettingsProvider. Diagnostics:\n${traceInfo}`);
-  }
-  return context;
+export function useSettingsContext(): SettingsState {
+  return useContext(SettingsContext);
 }
