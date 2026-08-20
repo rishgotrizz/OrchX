@@ -3,7 +3,6 @@
 import React, { useEffect } from "react";
 import { DualPanelLayout } from "@/components/layout/templates/DualPanelLayout";
 import { WidgetRenderer } from "@/components/layout/WidgetRenderer";
-import { SettingsProvider } from "@/contexts/SettingsContext";
 import { initializeSettingsWidgets, initializeSettingsMockData } from "@/components/widgets/settings";
 
 if (typeof window !== "undefined") {
@@ -41,15 +40,13 @@ export default function SettingsStudioPage() {
   );
 
   return (
-    <SettingsProvider>
-      <DualPanelLayout
-        id="settings-studio-layout"
-        title="Settings"
-        leftPanel={leftPanel}
-        rightPanel={rightPanel}
-        leftSize={25}
-        rightSize={75}
-      />
-    </SettingsProvider>
+    <DualPanelLayout
+      id="settings-studio-layout"
+      title="Settings"
+      leftPanel={leftPanel}
+      rightPanel={rightPanel}
+      leftSize={25}
+      rightSize={75}
+    />
   );
 }
