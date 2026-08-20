@@ -21,6 +21,9 @@ class DefaultSelectionStrategy(ProviderSelectionStrategy):
             # Skip failed providers
             if provider.failure_flag:
                 continue
+            # Skip providers without credentials
+            if hasattr(provider, "has_credentials") and not provider.has_credentials:
+                continue
             for model in provider.list_models():
                 if model.status != "online":
                     continue
@@ -43,6 +46,8 @@ class LowestLatencyStrategy(ProviderSelectionStrategy):
         candidates = []
         for provider in providers:
             if provider.failure_flag:
+                continue
+            if hasattr(provider, "has_credentials") and not provider.has_credentials:
                 continue
             for model in provider.list_models():
                 if model.status != "online":
@@ -77,6 +82,8 @@ class OptimizedSelectionStrategy(ProviderSelectionStrategy):
         candidates = []
         for provider in providers:
             if getattr(provider, "failure_flag", False):
+                continue
+            if hasattr(provider, "has_credentials") and not provider.has_credentials:
                 continue
             for model in provider.list_models():
                 if model.status != "online":
@@ -121,3 +128,34 @@ class OptimizedSelectionStrategy(ProviderSelectionStrategy):
         # Sort by score descending
         scored_candidates.sort(key=lambda x: x[0], reverse=True)
         return scored_candidates[0][1], scored_candidates[0][2]
+
+
+class ExplicitSelectionStrategy(ProviderSelectionStrategy):
+    """
+    Selects a specific provider and/or model ID if they are requested,
+    otherwise falls back to default capability-based selection.
+    """
+    def __init__(self, provider_id: Optional[str] = None, model_id: Optional[str] = None):
+        self.provider_id = provider_id
+        self.model_id = model_id
+
+    def select_model(
+        self,
+        required_capabilities: List[str],
+        providers: List[BaseProvider]
+    ) -> Optional[Tuple[BaseProvider, Model]]:
+        for provider in providers:
+            if getattr(provider, "failure_flag", False):
+                continue
+            if self.provider_id and provider.provider_info.id != self.provider_id:
+                continue
+            if hasattr(provider, "has_credentials") and not provider.has_credentials:
+                continue
+            for model in provider.list_models():
+                if model.status != "online":
+                    continue
+                if self.model_id and model.id != self.model_id:
+                    continue
+                if all(cap in model.capabilities for cap in required_capabilities):
+                    return provider, model
+        return None

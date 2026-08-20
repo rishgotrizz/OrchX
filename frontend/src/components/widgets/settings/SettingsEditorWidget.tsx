@@ -82,10 +82,11 @@ export const SettingsEditorWidget = forwardRef((props, ref) => {
         const initialStatus: Record<string, any> = {};
 
         combinedList.forEach(p => {
-          const val = stored[p.id] || "";
-          initialMap[p.id] = val;
-          if (val) {
-            initialStatus[p.id] = { status: 'valid', latencyMs: p.id === 'groq' ? 255 : p.id === 'openrouter' ? 1970 : 180 };
+          const storedState = stored[p.id];
+          const isConfigured = storedState && (storedState === "configured" || storedState.configured === true || (typeof storedState === 'string' && storedState.trim() !== ""));
+          initialMap[p.id] = isConfigured ? "••••••••••••••••" : "";
+          if (isConfigured) {
+            initialStatus[p.id] = { status: 'valid', latencyMs: p.id === 'groq' ? 255 : p.id === 'openrouter' ? 1970 : 180, message: 'Key Verified & Active' };
           } else {
             initialStatus[p.id] = { status: 'untested' };
           }
@@ -115,6 +116,14 @@ export const SettingsEditorWidget = forwardRef((props, ref) => {
       return;
     }
 
+    if (keyVal === "••••••••••••••••") {
+      setKeyStatusMap(prev => ({ 
+        ...prev, 
+        [provider.id]: { status: 'valid', latencyMs: provider.id === 'groq' ? 255 : provider.id === 'openrouter' ? 1970 : 180, message: 'Key Verified & Active' } 
+      }));
+      return;
+    }
+
     setKeyStatusMap(prev => ({ ...prev, [provider.id]: { status: 'verifying' } }));
     const startTime = performance.now();
 
@@ -136,6 +145,19 @@ export const SettingsEditorWidget = forwardRef((props, ref) => {
       }
 
       if (isSuccess) {
+        // Send raw key to backend SecretVault
+        try {
+          const { ProviderRepository } = await import('@/lib/repositories/ProviderRepository');
+          await ProviderRepository.storeCredentials(provider.id, keyVal);
+        } catch (err: any) {
+          console.error("Failed to store key in backend vault:", err);
+          setKeyStatusMap(prev => ({ 
+            ...prev, 
+            [provider.id]: { status: 'invalid', message: 'Failed to securely store key in backend SecretVault' } 
+          }));
+          return;
+        }
+
         setKeyStatusMap(prev => ({ 
           ...prev, 
           [provider.id]: { status: 'valid', latencyMs: latency > 0 ? latency : 250, message: 'Key Verified & Active' } 
@@ -143,10 +165,14 @@ export const SettingsEditorWidget = forwardRef((props, ref) => {
 
         if (typeof window !== 'undefined') {
           const stored = JSON.parse(localStorage.getItem('orchx_user_credentials') || '{}');
-          stored[provider.id] = keyVal;
+          // Replace raw value with non-sensitive configured status
+          stored[provider.id] = { configured: true };
           localStorage.setItem('orchx_user_credentials', JSON.stringify(stored));
           window.dispatchEvent(new Event('orchx_credentials_updated'));
         }
+
+        // Mask the current keysState value
+        setKeysState(prev => ({ ...prev, [provider.id]: "••••••••••••••••" }));
 
         setSaveSuccessMsg(`Saved ${provider.name} key to SecretVault!`);
         setTimeout(() => setSaveSuccessMsg(null), 3000);

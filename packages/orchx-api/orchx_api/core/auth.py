@@ -11,7 +11,25 @@ from orchx_api.core.database import get_db
 from orchx_api.models import User
 from orchx_api.schemas import TokenPayload
 
-SECRET_KEY = "32b217e651e069273fb89ef0673d32efde6db36d0dbef1e83161c6b12a8be51e"
+import os
+import logging
+import secrets
+
+env_raw = os.environ.get("ORCHX_ENV", "development")
+ORCHX_ENV = env_raw.strip().lower() if env_raw and env_raw.strip() else "development"
+SECRET_KEY = os.environ.get("ORCHX_JWT_SECRET")
+
+if ORCHX_ENV == "production":
+    if not SECRET_KEY or SECRET_KEY.strip() == "":
+        raise ValueError("ORCHX_JWT_SECRET environment variable must be explicitly configured in production mode.")
+else:
+    # Development fallback
+    if not SECRET_KEY or SECRET_KEY.strip() == "":
+        # Generate an ephemeral process-local key
+        SECRET_KEY = secrets.token_hex(32)
+        logger = logging.getLogger("orchx_api.core.auth")
+        logger.warning("ORCHX_JWT_SECRET not configured. Generated a process-local ephemeral JWT secret key for development.")
+
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 1 week
 

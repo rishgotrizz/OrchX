@@ -33,12 +33,19 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -e packages/orchx-core
 pip install -e packages/orchx-runtime
+pip install -r packages/orchx-api/requirements.txt # or pip install -e packages/orchx-api
 
-# 3. Configure Master Encryption Key for SecretVault
-export ORCHX_MASTER_KEY=$(python3 -c "import base64, os; print(base64.b64encode(os.urandom(32)).decode('utf-8'))")
-export ORCHX_DB_PATH="runtime.db"
+# 3. Generate a secure Master Encryption Key for SecretVault
+# Run this command to generate a key, then save it in your `.env` file (see .env.example)
+python3 -c "import base64, os; print(base64.b64encode(os.urandom(32)).decode('utf-8'))"
 
-# 4. Set up Frontend Web Application
+# 4. Start the backend API server
+# Copy .env.example to .env, set ORCHX_MASTER_KEY, then run:
+export $(cat .env | xargs)
+PYTHONPATH=packages/orchx-core:packages/orchx-runtime:packages/orchx-api uvicorn orchx_api.main:app --host 127.0.0.1 --port 8000 --reload
+
+# 5. Set up and start the Frontend Web Application
+# In a new terminal tab/window:
 cd frontend
 npm install
 npm run dev
@@ -48,9 +55,17 @@ Visit **`http://localhost:3000`** in your browser to access OrchX!
 
 ---
 
-## 🔑 Managing API Keys in SecretVault CLI
+## 🔑 Managing API Keys in SecretVault
 
-OrchX features a zero-trust credential vault (`SecretVault`). Raw API keys are **never stored in plaintext** or committed to source control.
+OrchX features a zero-trust credential vault (`SecretVault`). Raw API keys are **never stored in plaintext** or committed to source control. They can be added either directly through the **Settings Studio** UI page or using the command-line interface.
+
+### Option A: Via the Settings Studio UI (Recommended)
+1. Navigate to **`http://localhost:3000/settings-studio`** in your browser.
+2. Select your AI provider from the listing.
+3. Paste your API key and click **Verify & Save**.
+
+### Option B: Via the SecretVault CLI
+Activate your virtual environment and set your environment variables, then run:
 
 ```bash
 # Add Groq API Key
@@ -134,6 +149,16 @@ OrchX is fully configured for zero-configuration Vercel deployment:
 2. Connect your repository in the [Vercel Dashboard](https://vercel.com).
 3. Set Root Directory to `frontend`.
 4. Deploy! Live demo: **[https://orch-x.vercel.app/](https://orch-x.vercel.app/)**
+
+---
+
+## 🔒 Security Best Practices
+
+OrchX utilizes a zero-trust model to manage external AI provider keys:
+* **Never commit `.env` or `.env.*` files** to your repository. They are ignored by default via `.gitignore`.
+* **Never hardcode provider API keys** in any source code, frontends, or tests.
+* **Rotate any key accidentally exposed**. If an API key is accidentally committed, rotate and revoke it immediately at the provider's dashboard. Simply deleting the secret from your latest commit **does not invalidate it** as it remains accessible in the Git history.
+* **Secret Scanning**: We recommend configuring automated secret scanning (e.g. GitHub Secret Scanning) to prevent credentials leakage.
 
 ---
 

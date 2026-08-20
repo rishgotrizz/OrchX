@@ -9,5 +9,12 @@ export const ProviderRepository = {
   testConnection: async (id: string): Promise<{ success: boolean; latencyMs: number }> => {
     const { data } = await apiClient.post<{ success: boolean; latencyMs: number }>(`/providers/${id}/test`);
     return data;
+  },
+  storeCredentials: async (provider: string, apiKey: string): Promise<{ success: boolean; provider: string; status: string }> => {
+    const { data } = await apiClient.post<{ success: boolean; provider: string; status: string }>('/providers/credentials', {
+      provider,
+      api_key: apiKey
+    });
+    return data;
   }
 };

@@ -75,6 +75,14 @@ class SQLiteSecretVault(SecretVault):
 
     def __init__(self, db_path: str = ":memory:", encryption_engine: Optional[EncryptionEngine] = None):
         self.db_path = db_path
+        
+        # Check if persistent vault is configured and ORCHX_MASTER_KEY is missing
+        is_persistent = db_path != ":memory:"
+        
+        if is_persistent:
+            if not os.environ.get("ORCHX_MASTER_KEY") and not (encryption_engine and hasattr(encryption_engine, "master_key")):
+                raise ValueError("ORCHX_MASTER_KEY environment variable is required for persistent SecretVault configuration.")
+                
         self._conn = sqlite3.connect(db_path, check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
         self._conn.executescript(self._DDL)

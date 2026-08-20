@@ -15,4 +15,15 @@ export const RuntimeRepository = {
   getExecutions: async () => (await apiClient.get<RuntimeTypes.Execution[]>('/runtime/executions')).data,
   getRouterDecision: async () => (await apiClient.get<RuntimeTypes.RouterDecision>('/runtime/router-decision')).data,
   getLogs: async () => (await apiClient.get<RuntimeTypes.LogEntry[]>('/runtime/logs')).data,
+  executePrompt: async (payload: { prompt: string; conversation_id?: string; model?: string; provider?: string; stream?: boolean }) => {
+    const { data } = await apiClient.post<{
+      success: boolean;
+      response: string;
+      provider: string;
+      model: string;
+      latency_ms: number;
+      request_id: string;
+    }>('/runtime/execute', payload);
+    return data;
+  },
 };

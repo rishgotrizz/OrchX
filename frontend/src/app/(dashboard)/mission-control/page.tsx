@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { MissionProvider } from "@/contexts/MissionContext";
+import { useSettingsContext } from "@/contexts/SettingsContext";
 import { 
   Paperclip, 
   Mic, 
@@ -31,6 +32,8 @@ export default function MissionControlPage() {
   const [prompt, setPrompt] = useState("");
   const [isChatting, setIsChatting] = useState(false);
   const [messages, setMessages] = useState<any[]>([]);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   
   // Closed by default when no tasks are running!
   const [showPreview, setShowPreview] = useState(false);
@@ -38,60 +41,167 @@ export default function MissionControlPage() {
   const [activeMissionTitle, setActiveMissionTitle] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
+  const { getSettingValue } = useSettingsContext();
+
+  // Load chat messages when URL chat ID parameter changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const chatId = params.get("chat");
+      const missionName = params.get("mission");
+      
+      if (chatId) {
+        setConversationId(chatId);
+        setIsChatting(true);
+        const stored = localStorage.getItem(`orchx_chat_messages_${chatId}`);
+        if (stored) {
+          try {
+            setMessages(JSON.parse(stored));
+          } catch (e) {
+            setMessages([]);
+          }
+        } else {
+          setMessages([]);
+        }
+        if (missionName) {
+          setActiveMissionTitle(missionName);
+        }
+      } else {
+        setConversationId(null);
+        setMessages([]);
+        setIsChatting(false);
+        setActiveMissionTitle(null);
+      }
+    }
+  }, [typeof window !== 'undefined' ? window.location.search : null]);
+
   const handleSubmit = (e?: React.FormEvent, customPrompt?: string) => {
     e?.preventDefault();
+    if (loading) return;
     const textToSubmit = customPrompt || prompt;
     if (!textToSubmit.trim()) return;
     
     setIsChatting(true);
+    setLoading(true);
+    
     const newMsg = { role: "user", content: textToSubmit };
-    setMessages(prev => [...prev, newMsg]);
+    const loadingMsg = { role: "assistant", content: "Thinking...", loading: true };
+    const updatedUserMessages = [...messages, newMsg, loadingMsg];
+    setMessages(updatedUserMessages);
     setPrompt("");
 
-    const cleanText = textToSubmit
-      .replace(/^i (wanna|want to|would like to) (build|create|make)/i, '')
-      .replace(/^(build|create|make)/i, '')
-      .trim();
-
-    const titleSubject = cleanText 
-      ? cleanText.charAt(0).toUpperCase() + cleanText.slice(1) 
-      : textToSubmit.trim();
-
-    setActiveMissionTitle(titleSubject);
-    setShowPreview(true); // Open live preview when task is run!
-
-    // Save active mission & history
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('orchx_active_mission', titleSubject);
-
-      const existingHistory = JSON.parse(localStorage.getItem('orchx_chat_history') || '[]');
-      const newHistoryItem = { id: `chat-${Date.now()}`, title: titleSubject, createdAt: new Date().toISOString() };
-      const updatedHistory = [newHistoryItem, ...existingHistory.filter((item: any) => item.title !== titleSubject)];
-      localStorage.setItem('orchx_chat_history', JSON.stringify(updatedHistory));
-      window.dispatchEvent(new Event('orchx_chat_updated'));
+    let activeConversationId = conversationId;
+    if (!activeConversationId) {
+      activeConversationId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `conv-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+      setConversationId(activeConversationId);
     }
 
-    setTimeout(() => {
-      setMessages(prev => [
-        ...prev,
-        {
-          role: "assistant",
-          content: `I've analyzed your request and initialized a side-by-side agent execution and live project sandbox for ${titleSubject}.`,
-          missionName: titleSubject,
-          tasks: [
-            { id: 't-1', name: `Define ${titleSubject} Architecture & Scope`, status: 'Completed', detail: 'Analyzed domain model, core schemas, and interfaces.' },
-            { id: 't-2', name: 'Construct Interactive UI Components', status: 'In Progress', detail: 'Building responsive layouts and state handlers.' },
-            { id: 't-3', name: 'Wire State Engine & Data Persistence', status: 'Queued', detail: 'Setting up SQLite stores and event bus contracts.' },
-            { id: 't-4', name: 'Autonomous Testing & Vercel Deployment', status: 'Queued', detail: 'Running smoke tests and verifying production routes.' }
-          ],
-          decisions: [
-            { id: 'd-1', title: 'Tech Stack', choice: 'Next.js 16 (Turbopack) + Tailwind CSS', reason: 'Ensures sub-second static page compilation and responsive UI rendering.' },
-            { id: 'd-2', title: 'Security Policy', choice: 'SecretVault AES-256-GCM + RBAC', reason: 'Zero-trust credential isolation protecting runtime secrets.' },
-            { id: 'd-3', title: 'Resilience Strategy', choice: 'Circuit Breaker Failover Routing', reason: 'Sub-millisecond failover protection against upstream rate limits.' }
-          ]
+    // Save active conversation history
+    if (typeof window !== 'undefined') {
+      const cleanText = textToSubmit.slice(0, 30) + (textToSubmit.length > 30 ? "..." : "");
+      const existingHistory = JSON.parse(localStorage.getItem('orchx_chat_history') || '[]');
+      const conversationTitle = cleanText.trim() || "New Chat";
+      
+      const newHistoryItem = { 
+        id: activeConversationId, 
+        title: conversationTitle, 
+        createdAt: new Date().toISOString() 
+      };
+      
+      const updatedHistory = [
+        newHistoryItem, 
+        ...existingHistory.filter((item: any) => item.id !== activeConversationId)
+      ];
+      localStorage.setItem('orchx_chat_history', JSON.stringify(updatedHistory));
+      window.dispatchEvent(new Event('orchx_chat_updated'));
+      localStorage.setItem(`orchx_chat_messages_${activeConversationId}`, JSON.stringify(updatedUserMessages.filter(m => !m.loading)));
+    }
+
+    const preferredProvider = getSettingValue("routing.default_provider");
+    const preferredModel = getSettingValue("routing.primary_model");
+
+    import('@/lib/repositories/RuntimeRepository').then(async ({ RuntimeRepository }) => {
+      try {
+        const res = await RuntimeRepository.executePrompt({
+          prompt: textToSubmit,
+          conversation_id: activeConversationId || undefined,
+          provider: preferredProvider,
+          model: preferredModel,
+          stream: false
+        });
+
+        setMessages(prev => {
+          const updated = [...prev];
+          const lastIdx = updated.length - 1;
+          if (lastIdx >= 0 && updated[lastIdx].loading) {
+            updated[lastIdx] = {
+              role: "assistant",
+              content: res.response || "",
+              metadata: {
+                provider: res.provider,
+                model: res.model,
+                latencyMs: res.latency_ms,
+                requestId: res.request_id
+              }
+            };
+          }
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(`orchx_chat_messages_${activeConversationId}`, JSON.stringify(updated));
+          }
+          return updated;
+        });
+      } catch (err: any) {
+        console.error("OrchX execution failed:", err);
+        const detailMsg = err.response?.data?.detail;
+        let displayMsg = "Sorry, I couldn't complete that request.";
+        let errorCode = "PROVIDER_REQUEST_FAILED";
+        
+        if (typeof detailMsg === "string") {
+          const match = detailMsg.match(/^\[([A-Z0-9_]+)\]\s*(.*)$/);
+          if (match) {
+            errorCode = match[1];
+            const msgBody = match[2];
+            if (errorCode === "NO_PROVIDER_CONFIGURED") {
+              displayMsg = "No AI providers are configured yet. Please configure a provider and save its API key in Settings Studio to start executing prompts.";
+            } else if (errorCode === "PROVIDER_NOT_CONFIGURED") {
+              displayMsg = "The selected provider is not configured. Please add its API key in Settings Studio.";
+            } else if (errorCode === "PROVIDER_AUTH_FAILED") {
+              displayMsg = "Provider authentication failed. Please verify your API key in Settings Studio.";
+            } else if (errorCode === "PROVIDER_UNAVAILABLE") {
+              displayMsg = "This provider is temporarily unavailable. Try again or check your connectivity.";
+            } else if (errorCode === "PROVIDER_TIMEOUT") {
+              displayMsg = "The provider took too long to respond. Please try again.";
+            } else if (errorCode === "INVALID_PROVIDER_CONFIGURATION") {
+              displayMsg = "The provider configuration is invalid. Please review your settings.";
+            } else {
+              displayMsg = msgBody;
+            }
+          } else {
+            displayMsg = detailMsg.replace("Execution error: ", "");
+          }
         }
-      ]);
-    }, 1200);
+        setMessages(prev => {
+          const updated = [...prev];
+          const lastIdx = updated.length - 1;
+          if (lastIdx >= 0 && updated[lastIdx].loading) {
+            updated[lastIdx] = {
+              role: "assistant",
+              content: displayMsg,
+              error: true,
+              metadata: {
+                requestId: err.response?.data?.request_id || "unknown"
+              }
+            };
+          }
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(`orchx_chat_messages_${activeConversationId}`, JSON.stringify(updated));
+          }
+          return updated;
+        });
+      } finally {
+        setLoading(false);
+      }
+    });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -208,9 +318,34 @@ export default function MissionControlPage() {
                         </div>
                       ) : (
                         <div className="flex flex-col space-y-4 max-w-full w-full">
-                          <div className="text-text-primary text-sm leading-relaxed">
-                            {msg.content}
-                          </div>
+                          {msg.loading ? (
+                            <div className="flex items-center space-x-2 text-text-muted text-xs font-medium animate-pulse py-2">
+                              <Sparkles className="w-3.5 h-3.5 text-accent-primary animate-spin" />
+                              <span>Thinking...</span>
+                            </div>
+                          ) : (
+                            <div className="text-text-primary text-sm leading-relaxed whitespace-pre-wrap">
+                              {msg.content}
+                            </div>
+                          )}
+
+                          {/* Metadata Details Footnote */}
+                          {!msg.loading && msg.metadata && (
+                            <div className="text-[10px] text-text-muted flex items-center space-x-3 border-t border-glass-divider pt-1.5 w-fit">
+                              {msg.metadata.provider && (
+                                <span>Provider: <strong className="text-text-secondary">{msg.metadata.provider}</strong></span>
+                              )}
+                              {msg.metadata.model && (
+                                <span>Model: <strong className="text-text-secondary">{msg.metadata.model}</strong></span>
+                              )}
+                              {msg.metadata.latencyMs !== undefined && (
+                                <span>Latency: <strong className="text-text-secondary">{msg.metadata.latencyMs}ms</strong></span>
+                              )}
+                              {msg.metadata.requestId && (
+                                <span>ID: <strong className="text-text-secondary">{msg.metadata.requestId}</strong></span>
+                              )}
+                            </div>
+                          )}
                           
                           {/* Task Plan */}
                           {msg.tasks && (
@@ -287,8 +422,9 @@ export default function MissionControlPage() {
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder="Ask OrchX to build..."
-                    className="w-full bg-transparent resize-none p-3 pb-1 focus:outline-none text-text-primary placeholder:text-text-muted text-xs leading-relaxed max-h-32 overflow-y-auto"
+                    disabled={loading}
+                    placeholder={loading ? "Thinking..." : "Ask OrchX to build..."}
+                    className="w-full bg-transparent resize-none p-3 pb-1 focus:outline-none text-text-primary placeholder:text-text-muted text-xs leading-relaxed max-h-32 overflow-y-auto disabled:opacity-50"
                     rows={1}
                     style={{ minHeight: '48px' }}
                   />
@@ -303,7 +439,7 @@ export default function MissionControlPage() {
                     </div>
                     <button 
                       onClick={handleSubmit}
-                      disabled={!prompt.trim()}
+                      disabled={!prompt.trim() || loading}
                       className="p-1.5 bg-accent-primary text-white rounded-lg hover:bg-accent-hover transition-colors disabled:opacity-50"
                     >
                       <ArrowUp className="w-3.5 h-3.5" />

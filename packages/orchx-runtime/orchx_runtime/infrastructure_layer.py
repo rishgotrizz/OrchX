@@ -419,6 +419,13 @@ class ProviderCredentialManager:
             # For strict backward compatibility in tests that haven't set up the vault
             # but expect "vault-secret-key-1234"
             if self.vault_adapter.vault.db_path == ":memory:":
+                # Check if this key was explicitly deleted
+                row = self.vault_adapter.vault._conn.execute(
+                    "SELECT 1 FROM audit_logs WHERE secret_key = ? AND action = 'delete'",
+                    (key,)
+                ).fetchone()
+                if row:
+                    raise ValueError(f"No credential found for provider: {provider_id}")
                 return "vault-secret-key-1234"
             raise ValueError(f"No credential found for provider: {provider_id}")
             

@@ -51,6 +51,61 @@ class BaseRealProvider(BaseProvider):
         self._models_fetched = False
 
     @property
+    def manifest(self):
+        from orchx_core.interfaces.plugin import PluginManifest
+        return PluginManifest(
+            id=self.provider_id,
+            name=self.metadata.display_name,
+            version="1.0.0",
+            api_version="0.1.0",
+            type="provider",
+            entrypoint=f"orchx_runtime.provider_adapters.{self.__class__.__name__}",
+            capabilities=self.metadata.supported_capabilities,
+            permissions=[]
+        )
+
+    @property
+    def has_credentials(self) -> bool:
+        if hasattr(self, "_has_credentials_override") and self._has_credentials_override is not None:
+            return self._has_credentials_override
+            
+        if not self.metadata.authentication_required:
+            return True
+        try:
+            from orchx_runtime.vault import SecretAccessPolicy
+            import uuid
+            policy = SecretAccessPolicy(
+                service="ProviderCredentialManager",
+                provider=self.provider_id,
+                reason="Check credential availability",
+                request_id=str(uuid.uuid4())
+            )
+            key = f"{self.provider_id}_api_key"
+            secret = self.cred_manager.vault_adapter.get_secret_sync(key, policy)
+            if secret:
+                return True
+        except Exception:
+            pass
+        
+        # Fallback to direct get_credential check (for test mocks/env vars)
+        try:
+            return bool(self.cred_manager.get_credential(self.provider_id))
+        except Exception:
+            return False
+
+    @has_credentials.setter
+    def has_credentials(self, value: bool):
+        self._has_credentials_override = value
+
+    async def install(self, context: Any) -> None: pass
+    async def initialize(self, context: Any) -> None: pass
+    async def start(self, context: Any) -> None: pass
+    async def stop(self, context: Any) -> None: pass
+    async def pause(self, context: Any) -> None: pass
+    async def resume(self, context: Any) -> None: pass
+    async def uninstall(self, context: Any) -> None: pass
+
+    @property
     def failure_flag(self) -> bool:
         return self.transport.circuit_breaker.state == "open"
         
